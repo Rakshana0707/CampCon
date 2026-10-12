@@ -1,0 +1,261 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ------------------------------------
+// ENUMS
+// ------------------------------------
+enum Role {
+  STUDENT
+  ORGANIZER
+  ADMIN
+}
+
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum AttendanceStatus {
+  PENDING
+  PRESENT
+}
+
+enum CertificateType {
+  NONE
+  PARTICIPATION
+  VOLUNTEER
+  WINNER
+}
+
+enum EventRole {
+  PARTICIPANT
+  VOLUNTEER
+}
+
+enum EventStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum EventType {
+  INTRA_COLLEGE
+  INTER_COLLEGE
+}
+
+enum OrganizerType {
+  DEPARTMENT
+  CLUB
+}
+
+enum AffiliationStatus {
+  INTERNAL_VERIFIED
+  EXTERNAL
+  UNVERIFIED
+}
+
+// ------------------------------------
+// MODELS
+// ------------------------------------
+
+model User {
+  id            Int       @id @default(autoincrement())
+  name          String
+  email         String    @unique
+  passwordHash  String
+  role          Role      @default(STUDENT)
+  department    String?
+  rollNumber    String?
+  collegeName       String?           @default("Our College")
+  affiliationStatus AffiliationStatus @default(UNVERIFIED)
+  isActive          Boolean           @default(true)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  // Relationships
+  eventsOrganized       Event[]               @relation("OrganizedEvents")
+  organizerAssignments OrganizerAssignment[]
+  registrations         Registration[]
+  bookmarks             Bookmark[]
+  notifications         Notification[]
+  scannedTickets        Attendance[]
+  certificates          Certificate[]
+
+  @@index([role])
+  @@index([affiliationStatus])
+  @@index([isActive])
+}
+
+model OrganizerEntity {
+  id            Int           @id @default(autoincrement())
+  name          String        @unique
+  type          OrganizerType
+  category      String?       // "Undergraduate", "Postgraduate", "Integrated", "Club", "Cell", etc.
+  description   String?       @db.Text
+  contactPerson String?
+  contactEmail  String?
+  isActive      Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relationships
+  events        Event[]
+  assignments   OrganizerAssignment[]
+
+  @@index([type])
+  @@index([isActive])
+}
+
+model OrganizerAssignment {
+  id                Int             @id @default(autoincrement())
+  userId            Int
+  organizerEntityId Int
+  assignedAt        DateTime        @default(now())
+
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizerEntity   OrganizerEntity @relation(fields: [organizerEntityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizerEntityId])
+  @@index([userId])
+  @@index([organizerEntityId])
+}
+
+model Event {
+  id                           Int             @id @default(autoincrement())
+  title                        String
+  description                  String          @db.Text
+  category                     String
+  department                   String
+  date                         DateTime
+  venue                        String
+  totalSeats                   Int
+  availableSeats               Int
+  image                        String?         @db.Text
+  status                       EventStatus     @default(APPROVED)
+  isTrending                   Boolean         @default(false)
+  requiresApproval             Boolean         @default(false)
+  deadline                     DateTime?
+  
+  // Event Classification & Eligibility
+  eventType                    EventType       @default(INTRA_COLLEGE)
+  externalParticipationAllowed Boolean         @default(false)
+  eligibleParticipants         String?         // Description of eligibility requirements
+  contactPerson                String?
+  contactEmail                 String?
+  
+  createdAt                    DateTime        @default(now())
+  updatedAt                    DateTime        @updatedAt
+
+  organizerId                  Int
+  organizer                    User            @relation("OrganizedEvents", fields: [organizerId], references: [id], onDelete: Cascade)
+
+  // Official Organizing Entity
+  organizerEntityId            Int?
+  organizerEntity              OrganizerEntity? @relation(fields: [organizerEntityId], references: [id], onDelete: SetNull)
+
+  // Relationships
+  registrations                Registration[]
+  bookmarks                    Bookmark[]
+  attendances                  Attendance[]
+  certificates                 Certificate[]
+
+  // Indexes for high-performance filtering
+  @@index([status])
+  @@index([category])
+  @@index([department])
+  @@index([date])
+  @@index([eventType])
+  @@index([organizerEntityId])
+}
+
+model Registration {
+  id                 Int                @id @default(autoincrement())
+  ticketId           String             @unique @default(uuid())
+  role               EventRole          @default(PARTICIPANT)
+  status             RegistrationStatus @default(PENDING)
+  attendance         AttendanceStatus   @default(PENDING)
+  certificateType    CertificateType    @default(NONE)
+  
+  // External participant details for Inter-College Events
+  participantCollege String?
+  institutionDetails String?
+
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  userId             Int
+  eventId            Int
+
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event              Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  attendanceLog      Attendance?
+  certificate        Certificate?
+
+  // A user can only register once per event
+  @@unique([userId, eventId])
+  
+  // High-performance lookup indexes
+  @@index([userId])
+  @@index([eventId])
+}
+
+model Bookmark {
+  userId  Int
+  eventId Int
+
+  user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  // Composite Primary Key
+  @@id([userId, eventId])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  message   String   @db.Text
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // If userId is null, it acts as a global broadcast
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Attendance {
+  id             Int          @id @default(autoincrement())
+  registrationId Int          @unique
+  eventId        Int
+  scannedById    Int
+  scannedAt      DateTime     @default(now())
+
+  registration   Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  event          Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  scannedBy      User         @relation(fields: [scannedById], references: [id])
+  
+  @@index([eventId])
+  @@index([scannedById])
+}
+
+model Certificate {
+  id             Int          @id @default(autoincrement())
+  certificateId  String       @unique @default(uuid())
+  registrationId Int          @unique
+  userId         Int
+  eventId        Int
+  issuedAt       DateTime     @default(now())
+
+  registration   Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event          Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([eventId])
+}

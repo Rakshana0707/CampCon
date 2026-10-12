@@ -1,0 +1,20 @@
+# Node modules
+node_modules/
+
+# Secrets
+.env
+*.pem
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Prisma
+# We want to keep prisma schema, but ignore temporary DB files if any
+*.db
+*.db-journal
+
+# OS generated files
+.DS_Store
+Thumbs.db

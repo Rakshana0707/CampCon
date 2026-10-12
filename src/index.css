@@ -1,0 +1,158 @@
+:root {
+  /* =========================================
+     CAMPUSCONNECT DESIGN SYSTEM
+     ========================================= */
+  
+  /* 1. Typography */
+  --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-4xl: 2.5rem;
+  --text-5xl: 3.5rem;
+
+  /* 2. Colors - Core Palette */
+  --bg-primary: #0b1120;
+  --bg-secondary: #101b33;
+  --bg-tertiary: #1e293b;
+  
+  /* Colors - Text */
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  
+  /* Colors - Accents (Primary/Secondary) */
+  --accent-primary: #6366f1; /* Indigo */
+  --accent-primary-hover: #4f46e5;
+  --accent-cyan: #06b6d4;
+  
+  /* Colors - Semantic Statuses */
+  --status-success: #10b981; /* Emerald */
+  --status-success-hover: #059669;
+  --status-warning: #f59e0b; /* Amber */
+  --status-warning-hover: #d97706;
+  --status-danger: #f43f5e;  /* Rose */
+  --status-danger-hover: #e11d48;
+  
+  /* 3. Spacing Scale */
+  --spacing-1: 0.25rem;  /* 4px */
+  --spacing-2: 0.5rem;   /* 8px */
+  --spacing-3: 1rem;     /* 16px */
+  --spacing-4: 1.5rem;   /* 24px */
+  --spacing-5: 2rem;     /* 32px */
+  --spacing-6: 3rem;     /* 48px */
+  
+  /* 4. Borders & Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-pill: 9999px;
+  --border-light: rgba(255, 255, 255, 0.08);
+  --border-lighter: rgba(255, 255, 255, 0.2);
+  
+  /* 5. Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 15px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.25);
+  --shadow-float: 0 15px 35px rgba(0, 0, 0, 0.2);
+  --shadow-glow-primary: 0 4px 15px rgba(99, 102, 241, 0.25);
+  --shadow-glow-success: 0 4px 15px rgba(16, 185, 129, 0.25);
+  
+  /* 6. Surfaces (Glassmorphism) */
+  --glass-bg: rgba(16, 27, 51, 0.7);
+  --glass-card-bg: rgba(30, 41, 59, 0.45);
+  --glass-border: 1px solid var(--border-light);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-body);
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.025em;
+  font-weight: 700;
+}
+
+a {
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-color);
+}
+/* =========================================
+   ACCESSIBILITY & MOBILE OPTIMIZATION
+   ========================================= */
+
+/* A11y Focus Rings */
+:focus-visible {
+    outline: 2px solid var(--accent-primary) !important;
+    outline-offset: 2px !important;
+    border-radius: 2px;
+}
+
+/* Enforce minimum touch target size for mobile (WCAG 2.1) */
+button, 
+a.btn, 
+.nav-link, 
+.dropdown-item, 
+input[type="checkbox"], 
+input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+/* Screen reader only utility class */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+/* Skip to Main Content Link */
+.skip-link {
+    position: absolute;
+    top: -100px;
+    left: 0;
+    background: var(--accent-primary);
+    color: white;
+    padding: 12px 24px;
+    z-index: 9999;
+    font-weight: bold;
+    border-radius: 0 0 var(--radius-md) 0;
+    transition: top 0.2s ease-in-out;
+}
+
+.skip-link:focus {
+    top: 0;
+}
