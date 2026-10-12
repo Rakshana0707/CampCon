@@ -11,8 +11,13 @@ function OrganizerEventCard({ event, onEdit, onDelete, onApprove, onReject }) {
         <div className="organizer-card mb-3">
             <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between w-100 gap-3">
                 <div>
-                    <div className="d-flex align-items-center gap-2 mb-2">
+                    <div className="d-flex align-items-center gap-2 mb-2 flex-wrap">
                         <span className="badge bg-primary text-white fs-8">{event.category}</span>
+                        {event.eventType === "INTER_COLLEGE" ? (
+                            <span className="badge bg-info text-dark fs-8 fw-bold">🌐 Inter-College</span>
+                        ) : (
+                            <span className="badge bg-dark border border-secondary text-light fs-8">🏛️ Intra-College</span>
+                        )}
                         {event.trending && (
                             <span className="badge bg-danger text-white fs-8">Trending</span>
                         )}
@@ -20,7 +25,12 @@ function OrganizerEventCard({ event, onEdit, onDelete, onApprove, onReject }) {
                         {event.status === "REJECTED" && <span className="badge bg-secondary text-white fs-8">Rejected</span>}
                         {event.status === "APPROVED" && <span className="badge bg-success text-white fs-8">Approved</span>}
                     </div>
-                    <h4 className="text-white fw-bold mb-2">{event.title}</h4>
+                    <h4 className="text-white fw-bold mb-1">{event.title}</h4>
+                    {(event.organizingEntityName || event.organizerEntity?.name || event.department) && (
+                        <span className="text-muted fs-8 d-block mb-2">
+                            Organized by: <strong className="text-white">{event.organizingEntityName || event.organizerEntity?.name || event.department}</strong>
+                        </span>
+                    )}
                     <div className="d-flex flex-wrap gap-3 text-muted fs-7 mb-0">
                         <span className="d-flex align-items-center gap-1">
                             <FaCalendarAlt size={12} className="text-primary" /> {event.date} {event.time && `• ${event.time}`}

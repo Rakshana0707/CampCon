@@ -68,13 +68,29 @@ describe('Event Endpoints', () => {
                     date: '2026-11-10',
                     venue: 'Hall A',
                     totalSeats: 100,
-                    deadline: '2026-11-09'
+                    deadline: '2026-11-09',
+                    eventType: 'INTRA_COLLEGE'
                 });
 
-            if (res.status === 403) console.log('RESPONSE:', res.body);
             expect(res.status).toBe(201);
             expect(res.body.success).toBe(true);
             expect((res.body.data || res.body.users || res.body.event || res.body.events || res.body.notifications || res.body.certificates || res.body.stats || res.body.dashboardData).title).toBe('New Hackathon');
+        });
+
+        it('should reject event creation if eventType is missing', async () => {
+            const res = await request(app)
+                .post('/api/events')
+                .set('Authorization', `Bearer ${organizerToken}`)
+                .send({
+                    title: 'Missing Type Event',
+                    date: '2026-11-10',
+                    venue: 'Hall A',
+                    totalSeats: 100
+                });
+
+            expect(res.status).toBe(400);
+            expect(res.body.success).toBe(false);
+            expect(res.body.error).toMatch(/Event type is required/i);
         });
 
         it('should deny event creation to students', async () => {

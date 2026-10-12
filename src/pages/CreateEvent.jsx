@@ -144,10 +144,30 @@ function CreateEvent() {
         }
     };
 
+    const handleSelectEventType = (type) => {
+        setForm(prev => ({
+            ...prev,
+            eventType: type,
+            eligibleParticipants: type === "INTER_COLLEGE" 
+                ? "Open to participants from multiple colleges" 
+                : "Our College Students Only",
+            externalParticipationAllowed: type === "INTER_COLLEGE"
+        }));
+
+        if (errors.eventType) {
+            setErrors(prev => ({ ...prev, eventType: null }));
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         
         let newErrors = {};
+
+        // Event Type is strictly required
+        if (!form.eventType || !["INTRA_COLLEGE", "INTER_COLLEGE"].includes(form.eventType)) {
+            newErrors.eventType = "Please select whether this event is Intra-College or Inter-College.";
+        }
 
         if (!form.date) {
             newErrors.date = "Event date is required.";
@@ -298,21 +318,82 @@ function CreateEvent() {
                                         {errors.organizerEntityId && <div className="invalid-feedback d-block">{errors.organizerEntityId}</div>}
                                     </div>
 
-                                    {/* Event Type */}
-                                    <div className="col-md-6 mb-3">
-                                        <label className="form-label text-white fw-semibold">
-                                            Event Classification *
+                                    {/* Event Type Radio Cards */}
+                                    <div className="col-12 mb-3">
+                                        <label className="form-label text-white fw-semibold d-block">
+                                            Event Classification / Type <span className="text-danger">*</span>
                                         </label>
-                                        <select
-                                            className="form-select"
-                                            name="eventType"
-                                            value={form.eventType}
-                                            onChange={handleChange}
-                                            required
-                                        >
-                                            <option value="INTRA_COLLEGE">🏛️ Intra-College (Within our college only)</option>
-                                            <option value="INTER_COLLEGE">🌐 Inter-College (Multi-college / External)</option>
-                                        </select>
+                                        <p className="text-muted fs-8 mb-2">
+                                            Select the scope of this event. This explicitly determines whether external college participants can register.
+                                        </p>
+                                        <div className="row g-3">
+                                            {/* Option 1: INTRA_COLLEGE */}
+                                            <div className="col-md-6">
+                                                <div 
+                                                    className={`p-3 rounded-3 border h-100 transition-all ${
+                                                        form.eventType === "INTRA_COLLEGE" 
+                                                            ? "border-primary bg-primary bg-opacity-15 shadow-sm" 
+                                                            : "border-secondary bg-dark bg-opacity-40"
+                                                    }`}
+                                                    onClick={() => handleSelectEventType("INTRA_COLLEGE")}
+                                                    style={{ cursor: "pointer" }}
+                                                >
+                                                    <div className="form-check d-flex align-items-start gap-2">
+                                                        <input 
+                                                            className="form-check-input mt-1" 
+                                                            type="radio" 
+                                                            name="eventType" 
+                                                            id="eventTypeIntra" 
+                                                            value="INTRA_COLLEGE"
+                                                            checked={form.eventType === "INTRA_COLLEGE"}
+                                                            onChange={() => handleSelectEventType("INTRA_COLLEGE")}
+                                                        />
+                                                        <label className="form-check-label w-100" htmlFor="eventTypeIntra" style={{ cursor: "pointer" }}>
+                                                            <span className="fw-bold text-white d-block fs-6">
+                                                                🏛️ INTRA_COLLEGE — Intra-College Event
+                                                            </span>
+                                                            <span className="text-muted fs-8 d-block mt-1">
+                                                                Conducted exclusively for participants within our college. External college registrations are blocked.
+                                                            </span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Option 2: INTER_COLLEGE */}
+                                            <div className="col-md-6">
+                                                <div 
+                                                    className={`p-3 rounded-3 border h-100 transition-all ${
+                                                        form.eventType === "INTER_COLLEGE" 
+                                                            ? "border-info bg-info bg-opacity-15 shadow-sm" 
+                                                            : "border-secondary bg-dark bg-opacity-40"
+                                                    }`}
+                                                    onClick={() => handleSelectEventType("INTER_COLLEGE")}
+                                                    style={{ cursor: "pointer" }}
+                                                >
+                                                    <div className="form-check d-flex align-items-start gap-2">
+                                                        <input 
+                                                            className="form-check-input mt-1" 
+                                                            type="radio" 
+                                                            name="eventType" 
+                                                            id="eventTypeInter" 
+                                                            value="INTER_COLLEGE"
+                                                            checked={form.eventType === "INTER_COLLEGE"}
+                                                            onChange={() => handleSelectEventType("INTER_COLLEGE")}
+                                                        />
+                                                        <label className="form-check-label w-100" htmlFor="eventTypeInter" style={{ cursor: "pointer" }}>
+                                                            <span className="fw-bold text-white d-block fs-6">
+                                                                🌐 INTER_COLLEGE — Inter-College Event
+                                                            </span>
+                                                            <span className="text-muted fs-8 d-block mt-1">
+                                                                Conducted for participants across multiple colleges. Open to both internal and external students.
+                                                            </span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {errors.eventType && <div className="text-danger fs-8 mt-2 fw-semibold">{errors.eventType}</div>}
                                     </div>
                                 </div>
 
