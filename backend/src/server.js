@@ -20,6 +20,14 @@ async function startServer() {
         await prisma.$connect();
         console.log('✅ Connected to MySQL database via Prisma');
 
+        // Automatically seed demo events and organizers if database is empty
+        try {
+            const { autoSeedIfEmpty } = require('../prisma/seedAll');
+            await autoSeedIfEmpty();
+        } catch (seedErr) {
+            console.warn('⚠️ Auto-seed check notice:', seedErr.message);
+        }
+
         app.listen(PORT, () => {
             console.log(`🚀 CampusConnect Backend running on http://localhost:${PORT}`);
         });
