@@ -36,7 +36,7 @@ function EventCard({ event }) {
     const isDeadlinePassed = event.deadline && now > new Date(event.rawDeadline || event.deadline);
 
     return (
-        <div className="col-lg-3 col-md-6 mb-4">
+        <div className="col-lg-4 col-md-6 mb-4">
             <Link to={`/events/${event.id}`} className="text-decoration-none">
                 <div className="event-card">
                     <div className="event-image">
