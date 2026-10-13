@@ -3,6 +3,35 @@ const jwt = require('jsonwebtoken');
 const prisma = require('../config/prisma');
 const { ensureInstitutionsSeeded, validateExternalInstitutionSelection } = require('./institution.controller');
 
+/**
+ * Helper to validate various CIT roll number / register number conventions
+ * Accommodates all departments, degrees (B.E., B.Tech, M.Sc Integrated, MCA, MBA),
+ * and years across CIT:
+ * 1. Anna University Register Number: 11 digits starting with CIT code 7176 (e.g. 71762205042)
+ * 2. Department Roll Numbers across all years (e.g. 22IT042, 23CS105, 24MSS015, L22ME001, 23MX101)
+ *    - Optional 'L' prefix for Lateral Entry
+ *    - 2-digit year (e.g. 19-29)
+ *    - Department code: 2 to 5 letters (e.g. IT, CS, EC, EE, ME, CE, CH, BM, AM, AI, DS, MSS, MCS, MDS, MX, MCA, MBA)
+ *    - 2 to 4 digits student serial number
+ * 3. 7 to 9 digit numeric roll numbers (e.g. 2205042)
+ */
+const isValidCitRollNumber = (rollNumber) => {
+    if (!rollNumber || typeof rollNumber !== 'string') return false;
+    const clean = rollNumber.trim().toUpperCase().replace(/[\s\-_.]+/g, '');
+    if (!clean) return false;
+
+    // Anna University 11-digit register number (CIT college code: 7176)
+    if (/^7176\d{7}$/.test(clean)) return true;
+
+    // Standard department roll numbers (e.g. 22IT042, 23CS105, 24MSS015, L22ME001, 23MX101)
+    if (/^(?:L)?\d{2}[A-Z]{2,5}\d{2,4}$/.test(clean)) return true;
+
+    // Numeric internal roll numbers (7 to 9 digits, e.g. 2205042)
+    if (/^\d{7,9}$/.test(clean)) return true;
+
+    return false;
+};
+
 // Helper to generate JWT token
 const generateToken = (userId) => {
     return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
@@ -103,15 +132,29 @@ const register = async (req, res, next) => {
             finalDistrict = validation.institution.district;
         } else {
             // Internal college student (Coimbatore Institute of Technology)
+            // 1. Validate CIT Roll Number Convention
+            if (!rollNumber || !isValidCitRollNumber(rollNumber)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid CIT roll number format. Please provide your official CIT roll number (e.g., 22IT042, 23CS105, 24MSS015, 23MX101) or Anna University register number (e.g., 71762205042).'
+                });
+            }
+
             const citInst = await prisma.institution.findFirst({
                 where: { code: 'TN-CBE-CIT' }
             });
             if (citInst) {
                 finalInstitutionId = citInst.id;
             }
-            if (lowerEmail.endsWith('.edu') || lowerEmail.endsWith('.ac.in') || lowerEmail.includes('@campusconnect.')) {
+
+            // 2. Strict Email Verification for Internal Status
+            const isCitDomain = lowerEmail.endsWith('@cit.edu.in') || lowerEmail.endsWith('.cit.edu.in');
+            const isAcademicDevEmail = lowerEmail.endsWith('.edu') || lowerEmail.endsWith('.ac.in') || lowerEmail.includes('@campusconnect.');
+
+            if (isCitDomain || isAcademicDevEmail) {
                 affiliationStatus = 'INTERNAL_VERIFIED';
             } else {
+                // If using personal email (@gmail.com, etc.), account is created but marked UNVERIFIED
                 affiliationStatus = 'UNVERIFIED';
             }
         }

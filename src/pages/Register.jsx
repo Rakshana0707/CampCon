@@ -167,7 +167,7 @@ function Register() {
                                             <input
                                                 id="regEmail"
                                                 className="form-control"
-                                                placeholder="john@college.edu"
+                                                placeholder={isExternal ? "john@example.com" : "yourname@cit.edu.in"}
                                                 name="email"
                                                 type="email"
                                                 value={form.email}
@@ -176,6 +176,11 @@ function Register() {
                                                 required
                                             />
                                         </div>
+                                        {!isExternal && (
+                                            <small className="text-info fs-9 d-block mt-1">
+                                                💡 Use your official @cit.edu.in email for instant internal student verification.
+                                            </small>
+                                        )}
                                     </div>
                                 </div>
 
@@ -283,7 +288,7 @@ function Register() {
                                             <input
                                                 id="regRoll"
                                                 className="form-control"
-                                                placeholder="e.g. 23MX101"
+                                                placeholder={isExternal ? "e.g. 23IT001 or Student ID" : "e.g. 22IT042, 23CS105, 24MSS015, or 7176..."}
                                                 name="rollNumber"
                                                 value={form.rollNumber || ""}
                                                 onChange={handleChange}
@@ -291,6 +296,11 @@ function Register() {
                                                 required
                                             />
                                         </div>
+                                        {!isExternal && (
+                                            <small className="text-muted fs-9 d-block mt-1">
+                                                Accepts CIT department roll numbers across all years &amp; branches (e.g., 22IT042, 23CS105, 24MSS015) or Anna University register numbers (7176...).
+                                            </small>
+                                        )}
                                     </div>
                                 </div>
 
