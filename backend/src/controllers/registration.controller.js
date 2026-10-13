@@ -24,6 +24,47 @@ const registerForEvent = async (req, res, next) => {
             return res.status(400).json({ success: false, error: 'Registration deadline has passed.' });
         }
 
+        // Admin check: Administrators cannot register as participants
+        if (req.user.role === 'ADMIN') {
+            return res.status(403).json({
+                success: false,
+                error: 'Administrators cannot register as event participants.'
+            });
+        }
+
+        // Conflict of Interest check: Organizers cannot participate in events organized by their own department/entity
+        if (req.user.role === 'ORGANIZER') {
+            const isCreator = event.organizerId === req.user.id || (event.contactEmail && event.contactEmail === req.user.email);
+            let isAssignedToEntity = false;
+
+            const assignments = await prisma.organizerAssignment.findMany({
+                where: { userId: req.user.id },
+                include: { organizerEntity: true }
+            });
+
+            const assignedNames = [
+                req.user.department,
+                ...assignments.map(a => a.organizerEntity?.name)
+            ].filter(Boolean).map(n => n.toLowerCase().trim());
+
+            const assignedEntityIds = assignments.map(a => a.organizerEntityId);
+
+            if (event.organizerEntityId && assignedEntityIds.includes(event.organizerEntityId)) {
+                isAssignedToEntity = true;
+            }
+
+            if (event.department && assignedNames.includes(event.department.toLowerCase().trim())) {
+                isAssignedToEntity = true;
+            }
+
+            if (isCreator || isAssignedToEntity) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Conflict of Interest: Organizers cannot participate in events organized by their own department or organization.'
+                });
+            }
+        }
+
         const {
             participantCollege,
             participantState,
@@ -87,7 +128,7 @@ const registerForEvent = async (req, res, next) => {
         // Eligibility & Event Type Rules
         if (event.eventType === 'INTRA_COLLEGE') {
             // Strictly for internal verified students of Coimbatore Institute of Technology
-            if (req.user.role === 'STUDENT') {
+            if (req.user.role === 'STUDENT' || req.user.role === 'ORGANIZER') {
                 if (req.user.affiliationStatus === 'EXTERNAL') {
                     return res.status(403).json({ 
                         success: false, 

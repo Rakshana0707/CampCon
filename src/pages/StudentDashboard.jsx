@@ -47,8 +47,8 @@ function StudentDashboard() {
     };
 
     // Gather student registrations and helper details
-    const studentRegs = registrations.filter((r) => r.studentId === currentUser.id);
-    const getEventForReg = (reg) => events.find((e) => e.id === reg.eventId);
+    const studentRegs = (registrations || []).filter((r) => r.studentId === currentUser?.id);
+    const getEventForReg = (reg) => (events || []).find((e) => e.id === reg.eventId);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -75,17 +75,17 @@ function StudentDashboard() {
     });
 
     // Bookmarked events
-    const savedEvents = events.filter((e) => bookmarks?.includes(e.id));
+    const savedEvents = (events || []).filter((e) => bookmarks?.includes(e.id));
 
     // AI Recommendations based on department and category preferences
-    const recommendations = events
+    const recommendations = (events || [])
         .filter((e) => {
             const alreadyReg = studentRegs.some((r) => r.eventId === e.id && r.status !== "Cancelled" && r.status !== "Rejected");
-            return !alreadyReg && (e.department?.toLowerCase() === currentUser.department?.toLowerCase() || e.trending);
+            return !alreadyReg && (e.department?.toLowerCase() === currentUser?.department?.toLowerCase() || e.trending);
         })
         .slice(0, 3);
 
-    const userNotifications = notifications.filter(n => !n.targetUserId || n.targetUserId === currentUser.id);
+    const userNotifications = (notifications || []).filter(n => !n.targetUserId || n.targetUserId === currentUser?.id);
 
     // Compute dynamic dashboard metrics
     const stats = [

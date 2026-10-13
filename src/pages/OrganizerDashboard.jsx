@@ -212,12 +212,21 @@ function OrganizerDashboard() {
     ];
 
     const actionsHeader = (
-        <Link
-            to="/create-event"
-            className="btn btn-success d-flex align-items-center gap-2 py-2 px-4 shadow"
-        >
-            <FaPlus /> Create Event
-        </Link>
+        <div className="d-flex align-items-center gap-2">
+            <Link
+                to="/student?tab=tickets"
+                className="btn btn-outline-info d-flex align-items-center gap-2 py-2 px-3 shadow-sm fs-8"
+                title="View events you registered for as a participant"
+            >
+                <FaQrcode /> My Personal Tickets
+            </Link>
+            <Link
+                to="/create-event"
+                className="btn btn-success d-flex align-items-center gap-2 py-2 px-4 shadow"
+            >
+                <FaPlus /> Create Event
+            </Link>
+        </div>
     );
 
     const sidebarCharts = (

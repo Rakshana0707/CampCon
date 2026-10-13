@@ -23,7 +23,31 @@ function SymposiumScheduleViewer({
     ? activities
     : (event?.activities || []);
 
-  const isStudent = currentUser?.role?.toLowerCase() === 'student';
+  const userRole = currentUser?.role?.toLowerCase();
+  const isAdmin = userRole === 'admin';
+  const isOrganizer = userRole === 'organizer';
+
+  // Extract organizer domain entities / departments
+  const organizerEntityNames = [
+    currentUser?.department,
+    ...(currentUser?.organizerAssignments || []).map(a => a.organizerEntity?.name || a.name)
+  ].filter(Boolean);
+
+  // Conflict of Interest: Organizers cannot participate in activities of their own department's event
+  const isOwnDepartmentEvent = isOrganizer && (
+    (event?.organizerEmail && currentUser?.email && event.organizerEmail.toLowerCase().trim() === currentUser.email.toLowerCase().trim()) ||
+    (currentUser?.id && event?.organizerId === currentUser.id) ||
+    organizerEntityNames.some(d => {
+      const dNorm = d.toLowerCase().trim();
+      return (
+        (event?.department && event.department.toLowerCase().trim() === dNorm) ||
+        (event?.organizingEntityName && event.organizingEntityName.toLowerCase().trim() === dNorm) ||
+        (event?.organizerEntity?.name && event.organizerEntity.name.toLowerCase().trim() === dNorm)
+      );
+    })
+  );
+
+  const canParticipate = (userRole === 'student' || isOrganizer) && !isOwnDepartmentEvent && !isAdmin;
   const dayActivities = effectiveActivities.filter(a => a.dayNumber === activeDay && a.isActive);
 
   const isActivityRegistered = (activityId) => {
@@ -106,7 +130,11 @@ function SymposiumScheduleViewer({
                   </div>
                 </div>
                 <div>
-                  {isStudent ? (
+                  {isAdmin ? (
+                    <span className="badge bg-secondary py-2 px-3">Admin View</span>
+                  ) : isOwnDepartmentEvent ? (
+                    <span className="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-50 py-2 px-3">Own Dept Event</span>
+                  ) : canParticipate || !currentUser ? (
                     <button
                       className={`btn btn-sm px-4 py-2 fw-bold ${registered ? 'btn-success' : isFull ? 'btn-secondary disabled' : 'btn-outline-warning'}`}
                       disabled={isProcessing || (isFull && !registered)}

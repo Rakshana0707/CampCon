@@ -449,6 +449,47 @@ const registerForActivity = async (req, res, next) => {
             });
         }
 
+        // Admin check: Administrators cannot register as participants
+        if (req.user.role === 'ADMIN') {
+            return res.status(403).json({
+                success: false,
+                error: 'Administrators cannot register as event participants.'
+            });
+        }
+
+        // Conflict of Interest check: Organizers cannot participate in activities organized by their own department/entity
+        if (req.user.role === 'ORGANIZER') {
+            const isCreator = parentEvent.organizerId === req.user.id || (parentEvent.contactEmail && parentEvent.contactEmail === req.user.email);
+            let isAssignedToEntity = false;
+
+            const assignments = await prisma.organizerAssignment.findMany({
+                where: { userId: req.user.id },
+                include: { organizerEntity: true }
+            });
+
+            const assignedNames = [
+                req.user.department,
+                ...assignments.map(a => a.organizerEntity?.name)
+            ].filter(Boolean).map(n => n.toLowerCase().trim());
+
+            const assignedEntityIds = assignments.map(a => a.organizerEntityId);
+
+            if (parentEvent.organizerEntityId && assignedEntityIds.includes(parentEvent.organizerEntityId)) {
+                isAssignedToEntity = true;
+            }
+
+            if (parentEvent.department && assignedNames.includes(parentEvent.department.toLowerCase().trim())) {
+                isAssignedToEntity = true;
+            }
+
+            if (isCreator || isAssignedToEntity) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Conflict of Interest: Organizers cannot participate in activities organized by their own department or organization.'
+                });
+            }
+        }
+
         let resolvedInstitutionId = req.user.institutionId || null;
         let resolvedCollegeName = req.user.collegeName || 'Coimbatore Institute of Technology';
         let resolvedState = req.user.collegeState || 'Tamil Nadu';

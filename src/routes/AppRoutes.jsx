@@ -28,8 +28,8 @@ function AppRoutes() {
                     <Route path="/organizers" element={<Organizers />} />
                     <Route path="/organizers/:id" element={<OrganizerProfile />} />
 
-                    {/* Student Protected Routes */}
-                    <Route element={<ProtectedRoute allowedRoles={["Student"]} />}>
+                    {/* Student Protected Routes (Accessible by Students and Organizers who participate) */}
+                    <Route element={<ProtectedRoute allowedRoles={["Student", "Organizer"]} />}>
                         <Route path="/student" element={<StudentDashboard />} />
                     </Route>
 

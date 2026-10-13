@@ -417,32 +417,64 @@ export function AppContextProvider({ children }) {
                 .filter(e => isAdmin || e.organizerId === currentUser.id)
                 .map(e => e.id);
 
-            if (myEventIds.length === 0) {
-                setIsLoading(false);
-                return;
-            }
-
             let allRegs = [];
             for (let id of myEventIds) {
-                const res = await api.get(`/events/${id}/registrations`);
-                if (res.data.success) {
-                    const mapped = res.data.registrations.map(r => ({
+                try {
+                    const res = await api.get(`/events/${id}/registrations`);
+                    if (res.data.success) {
+                        const mapped = res.data.registrations.map(r => ({
+                            id: r.id,
+                            ticketId: r.ticketId,
+                            studentId: r.userId,
+                            eventId: r.eventId,
+                            studentName: r.user?.name || "Student",
+                            studentEmail: r.user?.email || "",
+                            studentRollNumber: r.user?.rollNumber || "",
+                            studentDepartment: r.user?.department || "",
+                            role: r.role === 'VOLUNTEER' ? 'Volunteer' : 'Participant',
+                            status: r.status.charAt(0).toUpperCase() + r.status.slice(1).toLowerCase(),
+                            attendance: r.attendance === 'PRESENT' ? 'Present' : 'Pending',
+                            certificateType: r.certificateType.charAt(0).toUpperCase() + r.certificateType.slice(1).toLowerCase()
+                        }));
+                        allRegs = [...allRegs, ...mapped];
+                    }
+                } catch (e) {
+                    console.error(`Failed to fetch regs for event ${id}:`, e);
+                }
+            }
+
+            // Also fetch personal registrations for organizers participating in other events
+            try {
+                const myRes = await api.get("/registrations/me");
+                if (myRes.data?.success && myRes.data.registrations) {
+                    const existingIds = new Set(allRegs.map(r => r.id));
+                    const personalMapped = myRes.data.registrations.map(r => ({
                         id: r.id,
                         ticketId: r.ticketId,
                         studentId: r.userId,
                         eventId: r.eventId,
-                        studentName: r.user?.name || "Student",
-                        studentEmail: r.user?.email || "",
-                        studentRollNumber: r.user?.rollNumber || "",
-                        studentDepartment: r.user?.department || "",
+                        studentName: currentUser.name,
+                        studentEmail: currentUser.email,
+                        studentRollNumber: currentUser.rollNumber || "",
+                        studentDepartment: currentUser.department || "",
                         role: r.role === 'VOLUNTEER' ? 'Volunteer' : 'Participant',
                         status: r.status.charAt(0).toUpperCase() + r.status.slice(1).toLowerCase(),
                         attendance: r.attendance === 'PRESENT' ? 'Present' : 'Pending',
-                        certificateType: r.certificateType.charAt(0).toUpperCase() + r.certificateType.slice(1).toLowerCase()
+                        certificateType: r.certificateType ? (r.certificateType.charAt(0).toUpperCase() + r.certificateType.slice(1).toLowerCase()) : 'Participation'
                     }));
-                    allRegs = [...allRegs, ...mapped];
+                    for (const pr of personalMapped) {
+                        if (!existingIds.has(pr.id)) {
+                            allRegs.push(pr);
+                        }
+                    }
+                    if (myRes.data.activityRegistrations) {
+                        setActivityRegistrations(myRes.data.activityRegistrations);
+                    }
                 }
+            } catch (err) {
+                console.warn("Personal registration fetch skipped or unavailable", err);
             }
+
             setRegistrations(allRegs);
         } catch (error) {
              console.error("Failed to fetch organizer registrations", error);
@@ -470,20 +502,48 @@ export function AppContextProvider({ children }) {
                 return false;
             }
 
-            const res = await api.post(`/registrations`, { 
-                eventId, 
-                role: role.toUpperCase(),
-                ...extraData
-            });
+            try {
+                const res = await api.post(`/registrations`, { 
+                    eventId, 
+                    role: role.toUpperCase(),
+                    ...extraData
+                });
 
-            if (res.data.success) {
-                await fetchEvents(); // Update seats immediately
-                await fetchMyRegistrations(); // Update tickets
-                showToast(`Registered successfully!`, "success");
-                return true;
+                if (res.data.success) {
+                    await fetchEvents(); // Update seats immediately
+                    if (currentUser.role?.toLowerCase() === 'organizer') {
+                        await fetchOrganizerRegistrations();
+                    } else {
+                        await fetchMyRegistrations(); // Update tickets
+                    }
+                    showToast(`Registered successfully!`, "success");
+                    return true;
+                }
+            } catch (apiError) {
+                // Mock / demo fallback support
+                if (token === "mock_jwt_token" || !apiError.response) {
+                    const newReg = {
+                        id: Date.now(),
+                        ticketId: `CIT-${eventId}-${Date.now().toString().slice(-4)}`,
+                        studentId: currentUser.id,
+                        eventId: eventId,
+                        role: role === 'Volunteer' ? 'Volunteer' : 'Participant',
+                        status: 'Approved',
+                        attendance: 'Pending',
+                        certificateType: 'Participation',
+                        participantCollege: extraData.participantCollege || currentUser.collegeName,
+                        institutionDetails: extraData.institutionDetails || currentUser.department
+                    };
+                    setRegistrations(prev => [newReg, ...prev]);
+                    setEvents(prev => prev.map(ev => ev.id === eventId ? { ...ev, seats: Math.max(0, (ev.seats || ev.availableSeats || 1) - 1) } : ev));
+                    showToast("Registered successfully! (Demo Mode)", "success");
+                    return true;
+                }
+                showToast(apiError.response?.data?.error || "Registration failed", "danger");
+                return false;
             }
         } catch (error) {
-            showToast(error.response?.data?.error || "Registration failed", "danger");
+            showToast(error.message || "Registration failed", "danger");
             return false;
         }
     };
@@ -493,16 +553,31 @@ export function AppContextProvider({ children }) {
             const token = localStorage.getItem("campcon_token");
             if (!token) return false;
 
-            const res = await api.delete(`/registrations/${eventId}`);
+            try {
+                const res = await api.delete(`/registrations/${eventId}`);
 
-            if (res.data.success) {
-                await fetchEvents(); // Refresh seat count
-                await fetchMyRegistrations(); // Refresh tickets
-                showToast(`Cancelled registration successfully`, "info");
-                return true;
+                if (res.data.success) {
+                    await fetchEvents(); // Refresh seat count
+                    if (currentUser.role?.toLowerCase() === 'organizer') {
+                        await fetchOrganizerRegistrations();
+                    } else {
+                        await fetchMyRegistrations(); // Refresh tickets
+                    }
+                    showToast(`Cancelled registration successfully`, "info");
+                    return true;
+                }
+            } catch (apiError) {
+                if (token === "mock_jwt_token" || !apiError.response) {
+                    setRegistrations(prev => prev.filter(r => !(r.eventId === eventId && r.studentId === currentUser.id)));
+                    setEvents(prev => prev.map(ev => ev.id === eventId ? { ...ev, seats: (ev.seats || ev.availableSeats || 0) + 1 } : ev));
+                    showToast("Cancelled registration successfully (Demo Mode)", "info");
+                    return true;
+                }
+                showToast(apiError.response?.data?.error || "Failed to cancel registration", "danger");
+                return false;
             }
         } catch (error) {
-            showToast(error.response?.data?.error || "Failed to cancel registration", "danger");
+            showToast(error.message || "Failed to cancel registration", "danger");
             return false;
         }
     };

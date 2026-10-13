@@ -120,7 +120,7 @@ function Navbar() {
                             </NavLink>
                         </li>
 
-                        {currentUser?.role?.toLowerCase() === "student" && (
+                        {(currentUser?.role?.toLowerCase() === "student" || currentUser?.role?.toLowerCase() === "organizer") && (
                             <li className="nav-item">
                                 <NavLink
                                     to="/student?tab=tickets"
@@ -210,7 +210,7 @@ function Navbar() {
                                                 <FaColumns size={12} /> Dashboard Portal
                                             </Link>
                                         </li>
-                                        {currentUser.role?.toLowerCase() === "student" && (
+                                        {(currentUser.role?.toLowerCase() === "student" || currentUser.role?.toLowerCase() === "organizer") && (
                                             <li>
                                                 <Link 
                                                     className="dropdown-item rounded d-flex align-items-center gap-2 fs-8 py-2" 

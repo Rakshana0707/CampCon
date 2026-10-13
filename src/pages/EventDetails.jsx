@@ -85,6 +85,29 @@ function EventDetails() {
     const isBookmarked = bookmarks?.includes(event.id);
     const userRole = currentUser?.role?.toLowerCase();
     const isStudent = userRole === "student";
+    const isAdmin = userRole === "admin";
+    const isOrganizer = userRole === "organizer";
+
+    // Extract organizer's assigned domain entities / departments
+    const organizerEntityNames = [
+        currentUser?.department,
+        ...(currentUser?.organizerAssignments || []).map(a => a.organizerEntity?.name || a.name)
+    ].filter(Boolean);
+
+    // Conflict of Interest: Organizers cannot participate in events organized by their own department/club
+    const isOwnDepartmentOrManagedEvent = isOrganizer && (
+        (event.organizerEmail && currentUser?.email && event.organizerEmail.toLowerCase().trim() === currentUser.email.toLowerCase().trim()) ||
+        (currentUser?.id && event.organizerId === currentUser.id) ||
+        organizerEntityNames.some(d => {
+            const dNorm = d.toLowerCase().trim();
+            return (
+                (event.department && event.department.toLowerCase().trim() === dNorm) ||
+                (event.organizingEntityName && event.organizingEntityName.toLowerCase().trim() === dNorm) ||
+                (event.organizerEntity?.name && event.organizerEntity.name.toLowerCase().trim() === dNorm)
+            );
+        })
+    );
+
     const isRegistered = currentUser && registrations?.some(r => r.studentId === currentUser.id && r.eventId === event.id && r.status !== "Cancelled" && r.status !== "Rejected");
     const isSoldOut = event.seats <= 0;
 
@@ -201,6 +224,16 @@ function EventDetails() {
         if (!currentUser) {
             showToast("Please log in to register", "warning");
             navigate("/login");
+            return;
+        }
+
+        if (isAdmin) {
+            showToast("Administrators cannot register as participants.", "warning");
+            return;
+        }
+
+        if (isOwnDepartmentOrManagedEvent) {
+            showToast("Conflict of Interest: Organizers cannot participate in events organized by their own department.", "error");
             return;
         }
 
@@ -589,10 +622,19 @@ function EventDetails() {
                         )}
 
                         {/* Register Action Buttons */}
-                        {currentUser && !isStudent ? (
+                        {isAdmin ? (
                             <button className="btn btn-outline-light w-100 py-3 mb-3 fw-bold disabled" style={{ cursor: "not-allowed" }}>
-                                <FaShieldAlt className="me-2" /> For Students Only
+                                <FaShieldAlt className="me-2" /> Administrator Account (View Only)
                             </button>
+                        ) : isOwnDepartmentOrManagedEvent ? (
+                            <div className="mb-3">
+                                <button className="btn btn-outline-warning w-100 py-3 fw-bold disabled" style={{ cursor: "not-allowed" }}>
+                                    <FaShieldAlt className="me-2" /> Organizers Cannot Participate in Their Own Department Events
+                                </button>
+                                <p className="small text-warning text-center mt-2 mb-0">
+                                    As an organizer for {organizerEntityNames[0] || "this department"}, you cannot participate in this event due to conflict of interest. You can register for events hosted by other departments and clubs.
+                                </p>
+                            </div>
                         ) : (
                             <button
                                 className={`btn w-100 py-3 mb-3 fw-bold fs-6 d-flex align-items-center justify-content-center gap-2 ${
