@@ -478,11 +478,24 @@
 }
 
 /* ==========================================================================
+   FOOTER
+   ========================================================================== */
+
+.editorial-footer {
+    background-color: var(--bg-navbar);
+    border-top: 1px solid var(--border-editorial);
+    color: var(--text-muted);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* ==========================================================================
    LIGHT MODE: WHITE & PURPLE DESIGN SYSTEM OVERRIDES
    ========================================================================== */
 
 [data-theme="light"] .btn-primary,
-:root:not(.dark) .btn-primary {
+:root:not(.dark) .btn-primary,
+[data-theme="light"] .btn-editorial-primary,
+:root:not(.dark) .btn-editorial-primary {
     background-color: var(--accent-purple) !important;
     border-color: var(--accent-purple) !important;
     color: #FFFFFF !important;
@@ -490,11 +503,13 @@
 }
 
 [data-theme="light"] .btn-primary:hover,
-:root:not(.dark) .btn-primary:hover {
+:root:not(.dark) .btn-primary:hover,
+[data-theme="light"] .btn-editorial-primary:hover,
+:root:not(.dark) .btn-editorial-primary:hover {
     background-color: var(--accent-purple-hover) !important;
     border-color: var(--accent-purple-hover) !important;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
 }
 
 [data-theme="light"] .badge.bg-primary,
@@ -525,4 +540,67 @@
 :root:not(.dark) .editorial-nav-link.active {
     color: var(--accent-purple) !important;
     background-color: rgba(124, 58, 237, 0.08) !important;
+}
+
+[data-theme="light"] .theme-toggle-btn:hover,
+:root:not(.dark) .theme-toggle-btn:hover {
+    background: #F1ECF9 !important;
+    border-color: #7C3AED !important;
+    color: #7C3AED !important;
+}
+
+/* Light mode overrides for Bootstrap utility classes */
+[data-theme="light"] .bg-dark,
+:root:not(.dark) .bg-dark {
+    background-color: #F8F6FD !important;
+    color: #1D1135 !important;
+}
+
+[data-theme="light"] .text-white,
+:root:not(.dark) .text-white {
+    color: #1D1135 !important;
+}
+
+[data-theme="light"] .text-light,
+:root:not(.dark) .text-light {
+    color: #1D1135 !important;
+}
+
+[data-theme="light"] .border-secondary,
+:root:not(.dark) .border-secondary {
+    border-color: #EBE5F7 !important;
+}
+
+[data-theme="light"] .text-muted,
+:root:not(.dark) .text-muted {
+    color: #5D4E75 !important;
+}
+
+/* Preserve crisp white text inside colored accent buttons & badges in light mode */
+[data-theme="light"] .btn-primary,
+[data-theme="light"] .btn-primary *,
+[data-theme="light"] .btn-editorial-primary,
+[data-theme="light"] .btn-editorial-primary *,
+[data-theme="light"] .badge.bg-primary,
+[data-theme="light"] .badge.bg-success,
+[data-theme="light"] .badge.bg-danger,
+[data-theme="light"] .filter-pill.active,
+[data-theme="light"] .ticket-header,
+[data-theme="light"] .ticket-header *,
+[data-theme="light"] .featured-magazine-box .btn-editorial-primary,
+[data-theme="light"] .badge-inter,
+:root:not(.dark) .btn-primary,
+:root:not(.dark) .btn-primary *,
+:root:not(.dark) .btn-editorial-primary,
+:root:not(.dark) .btn-editorial-primary *,
+:root:not(.dark) .ticket-header,
+:root:not(.dark) .ticket-header * {
+    color: #FFFFFF !important;
+}
+
+[data-theme="light"] .modal-content,
+:root:not(.dark) .modal-content {
+    background-color: #FFFFFF !important;
+    color: #1D1135 !important;
+    border-color: #EBE5F7 !important;
 }

@@ -255,9 +255,9 @@ function Register() {
                             <form onSubmit={handleSubmit}>
                                 <div className="row">
                                     <div className="col-md-6 mb-3">
-                                        <label htmlFor="regName" className="text-white form-label fw-medium">Full Name <span className="text-danger">*</span></label>
+                                        <label htmlFor="regName" className="form-label fw-medium" style={{ color: "var(--text-main)" }}>Full Name <span className="text-danger">*</span></label>
                                         <div className="input-group">
-                                            <span className="input-group-text bg-dark border-secondary text-muted">
+                                            <span className="input-group-text" style={{ backgroundColor: "var(--bg-secondary)", borderColor: "var(--border-editorial)", color: "var(--text-muted)" }}>
                                                 <FaUser />
                                             </span>
                                             <input
@@ -274,9 +274,9 @@ function Register() {
                                     </div>
 
                                     <div className="col-md-6 mb-3">
-                                        <label htmlFor="regEmail" className="text-white form-label fw-medium">Email Address <span className="text-danger">*</span></label>
+                                        <label htmlFor="regEmail" className="form-label fw-medium" style={{ color: "var(--text-main)" }}>Email Address <span className="text-danger">*</span></label>
                                         <div className="input-group">
-                                            <span className="input-group-text bg-dark border-secondary text-muted">
+                                            <span className="input-group-text" style={{ backgroundColor: "var(--bg-secondary)", borderColor: "var(--border-editorial)", color: "var(--text-muted)" }}>
                                                 <FaEnvelope />
                                             </span>
                                             <input
@@ -301,10 +301,10 @@ function Register() {
 
                                 <div className="row">
                                     <div className="col-md-4 mb-3">
-                                        <label htmlFor="regStream" className="text-white form-label fw-medium">Stream / Degree <span className="text-danger">*</span></label>
+                                        <label htmlFor="regStream" className="form-label fw-medium" style={{ color: "var(--text-main)" }}>Stream / Degree <span className="text-danger">*</span></label>
                                         <select
                                             id="regStream"
-                                            className="form-select bg-dark text-white border-secondary"
+                                            className="form-select"
                                             value={selectedStream}
                                             onChange={handleStreamChange}
                                             disabled={isSubmitting}
@@ -316,7 +316,7 @@ function Register() {
                                     </div>
 
                                     <div className="col-md-5 mb-3">
-                                        <label htmlFor="regCourse" className="text-white form-label fw-medium">Course / Branch <span className="text-danger">*</span></label>
+                                        <label htmlFor="regCourse" className="form-label fw-medium" style={{ color: "var(--text-main)" }}>Course / Branch <span className="text-danger">*</span></label>
                                         {selectedStream === "Other" ? (
                                             <input
                                                 id="regCourse"
@@ -330,7 +330,7 @@ function Register() {
                                         ) : (
                                             <select
                                                 id="regCourse"
-                                                className="form-select bg-dark text-white border-secondary"
+                                                className="form-select"
                                                 value={selectedCourse}
                                                 onChange={(e) => setSelectedCourse(e.target.value)}
                                                 disabled={isSubmitting}
@@ -344,7 +344,7 @@ function Register() {
                                     </div>
 
                                     <div className="col-md-3 mb-3">
-                                        <label htmlFor="regYear" className="text-white form-label fw-medium">Year of Study</label>
+                                        <label htmlFor="regYear" className="form-label fw-medium" style={{ color: "var(--text-main)" }}>Year of Study</label>
                                         <select
                                             id="regYear"
                                             className="form-select"
@@ -362,7 +362,7 @@ function Register() {
 
                                 {selectedStream !== "Other" && selectedCourse === "Other" && (
                                     <div className="mb-3">
-                                        <label htmlFor="customCourseInput" className="text-white form-label fw-medium fs-8">
+                                        <label htmlFor="customCourseInput" className="form-label fw-medium fs-8" style={{ color: "var(--text-main)" }}>
                                             Specify Course / Department Name <span className="text-danger">*</span>
                                         </label>
                                         <input
@@ -379,10 +379,10 @@ function Register() {
 
                                 <div className="row">
                                     <div className="col-md-6 mb-3">
-                                        <label htmlFor="regRole" className="text-white form-label fw-medium">Role <span className="text-danger">*</span></label>
+                                        <label htmlFor="regRole" className="form-label fw-medium" style={{ color: "var(--text-main)" }}>Role <span className="text-danger">*</span></label>
                                         <select
                                             id="regRole"
-                                            className="form-select bg-dark text-white border-secondary"
+                                            className="form-select"
                                             name="role"
                                             value="Student"
                                             disabled={true}
@@ -395,10 +395,10 @@ function Register() {
                                     </div>
 
                                     <div className="col-md-6 mb-3">
-                                        <label htmlFor="regCollege" className="text-white form-label fw-medium">College Affiliation <span className="text-danger">*</span></label>
+                                        <label htmlFor="regCollege" className="form-label fw-medium" style={{ color: "var(--text-main)" }}>College Affiliation <span className="text-danger">*</span></label>
                                         <select
                                             id="regCollege"
-                                            className="form-select bg-dark text-white border-secondary"
+                                            className="form-select"
                                             name="collegeName"
                                             value={form.collegeName}
                                             onChange={handleChange}
@@ -434,9 +434,9 @@ function Register() {
 
                                 <div className="row">
                                     <div className="col-12 mb-3">
-                                        <label htmlFor="regRoll" className="text-white form-label fw-medium">Roll Number / Student ID <span className="text-danger">*</span></label>
+                                        <label htmlFor="regRoll" className="form-label fw-medium" style={{ color: "var(--text-main)" }}>Roll Number / Student ID <span className="text-danger">*</span></label>
                                         <div className="input-group">
-                                            <span className="input-group-text bg-dark border-secondary text-muted">
+                                            <span className="input-group-text" style={{ backgroundColor: "var(--bg-secondary)", borderColor: "var(--border-editorial)", color: "var(--text-muted)" }}>
                                                 <FaUser />
                                             </span>
                                             <input
@@ -460,9 +460,9 @@ function Register() {
 
                                 <div className="row">
                                     <div className="col-12 mb-4">
-                                        <label htmlFor="regPass" className="text-white form-label fw-medium">Password <span className="text-danger">*</span></label>
+                                        <label htmlFor="regPass" className="form-label fw-medium" style={{ color: "var(--text-main)" }}>Password <span className="text-danger">*</span></label>
                                         <div className="input-group">
-                                            <span className="input-group-text bg-dark border-secondary text-muted">
+                                            <span className="input-group-text" style={{ backgroundColor: "var(--bg-secondary)", borderColor: "var(--border-editorial)", color: "var(--text-muted)" }}>
                                                 <FaLock />
                                             </span>
                                             <input
@@ -482,7 +482,7 @@ function Register() {
                                 </div>
 
                                 <button
-                                    className="btn btn-success w-100 py-3 fw-bold fs-6 d-flex align-items-center justify-content-center gap-2"
+                                    className="btn btn-editorial-primary w-100 py-3 fw-bold fs-6 d-flex align-items-center justify-content-center gap-2"
                                     type="submit"
                                     disabled={isSubmitting || !isExternalValid}
                                 >
