@@ -334,7 +334,11 @@ const getAllEvents = async (req, res, next) => {
             where: whereClause,
             include: { 
                 organizer: { select: { id: true, name: true, department: true, email: true } },
-                organizerEntity: { select: { id: true, name: true, type: true, category: true, contactEmail: true, contactPerson: true } }
+                organizerEntity: { select: { id: true, name: true, type: true, category: true, contactEmail: true, contactPerson: true } },
+                activities: {
+                    where: { isActive: true },
+                    orderBy: [{ dayNumber: 'asc' }, { startTime: 'asc' }]
+                }
             },
             orderBy: { date: 'asc' }
         });
