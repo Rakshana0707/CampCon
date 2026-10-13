@@ -476,3 +476,53 @@
 .ticket-divider::after {
     right: -38px;
 }
+
+/* ==========================================================================
+   LIGHT MODE: WHITE & PURPLE DESIGN SYSTEM OVERRIDES
+   ========================================================================== */
+
+[data-theme="light"] .btn-primary,
+:root:not(.dark) .btn-primary {
+    background-color: var(--accent-purple) !important;
+    border-color: var(--accent-purple) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
+}
+
+[data-theme="light"] .btn-primary:hover,
+:root:not(.dark) .btn-primary:hover {
+    background-color: var(--accent-purple-hover) !important;
+    border-color: var(--accent-purple-hover) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
+}
+
+[data-theme="light"] .badge.bg-primary,
+:root:not(.dark) .badge.bg-primary {
+    background-color: var(--accent-purple) !important;
+    color: #FFFFFF !important;
+}
+
+[data-theme="light"] .ticket-header,
+:root:not(.dark) .ticket-header {
+    background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%) !important;
+}
+
+[data-theme="light"] .editorial-brand-dot,
+:root:not(.dark) .editorial-brand-dot {
+    background-color: var(--accent-purple) !important;
+    box-shadow: 0 0 8px rgba(124, 58, 237, 0.6);
+}
+
+[data-theme="light"] .filter-pill.active,
+:root:not(.dark) .filter-pill.active {
+    background: var(--accent-purple) !important;
+    border-color: var(--accent-purple) !important;
+    color: #FFFFFF !important;
+}
+
+[data-theme="light"] .editorial-nav-link.active,
+:root:not(.dark) .editorial-nav-link.active {
+    color: var(--accent-purple) !important;
+    background-color: rgba(124, 58, 237, 0.08) !important;
+}

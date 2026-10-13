@@ -39,36 +39,39 @@
   --radius-pill: 9999px;
 
   /* ==========================================================================
-     LIGHT THEME (Warm Ivory, Magazine Paper, Deep Navy, Cobalt Blue Accents)
+     LIGHT THEME (White & Royal Purple Palette)
+     Clean white paper surfaces, deep amethyst typography, vibrant royal purple accents
      ========================================================================== */
-  --bg-primary: #FAF8F5;          /* Warm Ivory / Cream paper */
-  --bg-secondary: #F3EFE9;        /* Soft parchment tone */
-  --bg-tertiary: #E8E2D8;         /* Warm tactile border/neutral fill */
-  --bg-card: #FFFFFF;             /* Crisp paper card */
-  --bg-card-subtle: #F6F3ED;      /* Editorial shaded block */
-  --bg-navbar: rgba(250, 248, 245, 0.92);
+  --bg-primary: #FFFFFF;          /* Pure crisp white background */
+  --bg-secondary: #F8F6FD;        /* Soft lilac/lavender surface */
+  --bg-tertiary: #F1ECF9;         /* Gentle purple-tinted neutral fill */
+  --bg-card: #FFFFFF;             /* Crisp white card */
+  --bg-card-subtle: #FAF8FE;      /* Subtle lilac card block */
+  --bg-navbar: rgba(255, 255, 255, 0.94);
 
-  --text-main: #141E30;           /* Deep navy typography */
-  --text-navy: #10192A;
-  --text-muted: #5A6679;          /* Readable editorial charcoal */
-  --text-subtle: #828E9E;         /* Light caption */
+  --text-main: #1D1135;           /* Deep amethyst / rich dark purple typography */
+  --text-navy: #15092B;           /* Dark violet heading */
+  --text-muted: #5D4E75;          /* Sophisticated slate-purple for secondary text */
+  --text-subtle: #897B9F;         /* Gentle lavender caption */
 
-  /* Cobalt & Muted Amber Accents */
-  --accent-cobalt: #1D4ED8;       /* Cobalt Blue */
-  --accent-cobalt-hover: #1E40AF;
-  --accent-primary: #1D4ED8;
-  --accent-primary-hover: #1E40AF;
-  --accent-primary-subtle: rgba(29, 78, 216, 0.08);
+  /* Royal Purple & Accents */
+  --accent-purple: #7C3AED;       /* Vibrant Royal Purple */
+  --accent-purple-hover: #6D28D9; /* Deep Violet */
+  --accent-cobalt: #7C3AED;       /* Mapped to purple for global consistency */
+  --accent-cobalt-hover: #6D28D9;
+  --accent-primary: #7C3AED;
+  --accent-primary-hover: #6D28D9;
+  --accent-primary-subtle: rgba(124, 58, 237, 0.08); /* Lavender pill glow */
 
   --accent-amber: #D97706;        /* Muted Warm Amber */
   --accent-amber-subtle: rgba(217, 119, 6, 0.12);
-  --accent-cyan: #0284C7;
+  --accent-cyan: #8B5CF6;         /* Soft secondary violet */
 
-  /* Editorial Fine Line Borders */
-  --border-editorial: #E2DBD0;
-  --border-light: #E8E2D8;
-  --border-focus: #1D4ED8;
-  --border-dark: #C8BFB0;
+  /* Purple-Tinted Fine Line Borders */
+  --border-editorial: #EBE5F7;    /* Delicate lilac border */
+  --border-light: #F3EEFB;        /* Subtle hairline divider */
+  --border-focus: #7C3AED;        /* Focused purple outline */
+  --border-dark: #D4C7EE;         /* Medium purple border */
 
   /* Status Colors */
   --status-success: #059669;
@@ -78,20 +81,20 @@
   --status-danger: #DC2626;
   --status-danger-subtle: rgba(220, 38, 38, 0.1);
 
-  /* Shadows (Subtle, paper-like drop shadows) */
-  --shadow-sm: 0 1px 3px rgba(20, 30, 48, 0.05);
-  --shadow-md: 0 4px 12px rgba(20, 30, 48, 0.07);
-  --shadow-lg: 0 12px 28px rgba(20, 30, 48, 0.09);
-  --shadow-float: 0 16px 36px rgba(20, 30, 48, 0.12);
-  --shadow-paper: 2px 4px 12px rgba(20, 30, 48, 0.06);
+  /* Shadows (Tinged with gentle purple warmth) */
+  --shadow-sm: 0 1px 3px rgba(124, 58, 237, 0.04);
+  --shadow-md: 0 4px 14px rgba(124, 58, 237, 0.07);
+  --shadow-lg: 0 12px 28px rgba(124, 58, 237, 0.09);
+  --shadow-float: 0 16px 36px rgba(124, 58, 237, 0.12);
+  --shadow-paper: 2px 4px 12px rgba(124, 58, 237, 0.05);
 
   /* Glassmorphism shims for existing components */
-  --glass-bg: rgba(255, 255, 255, 0.88);
+  --glass-bg: rgba(255, 255, 255, 0.92);
   --glass-card-bg: #FFFFFF;
   --glass-border: 1px solid var(--border-editorial);
 
   /* Paper grain overlay opacity */
-  --grain-opacity: 0.035;
+  --grain-opacity: 0.025;
 }
 
 /* ==========================================================================
