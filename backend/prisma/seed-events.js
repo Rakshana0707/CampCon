@@ -36,7 +36,7 @@ async function seedEvents() {
 
     console.log(`Using organizer user: ${organizerUser.name} (${organizerUser.email}, ID: ${organizerUser.id})`);
 
-    // 2. Fetch official CIT Department entities for linking
+    // 2. Fetch official CIT Department & Club entities for linking
     const cseDept = await prisma.organizerEntity.findFirst({ where: { name: 'B.E. Computer Science and Engineering' } });
     const eceDept = await prisma.organizerEntity.findFirst({ where: { name: 'B.E. Electronics and Communication Engineering' } });
     const chemDept = await prisma.organizerEntity.findFirst({ where: { name: 'B.Tech. Chemical Engineering' } });
@@ -46,9 +46,17 @@ async function seedEvents() {
     const civilDept = await prisma.organizerEntity.findFirst({ where: { name: 'B.E. Civil Engineering' } });
     const itDept = await prisma.organizerEntity.findFirst({ where: { name: 'B.Tech. Information Technology' } });
 
+    // Official Clubs
+    const musicClub = await prisma.organizerEntity.findFirst({ where: { name: 'Music Club' } });
+    const dramatixClub = await prisma.organizerEntity.findFirst({ where: { name: 'Dramatix' } });
+    const cyberClub = await prisma.organizerEntity.findFirst({ where: { name: 'Cyber Club' } });
+    const muthamizhClub = await prisma.organizerEntity.findFirst({ where: { name: 'Muthamizh Mandram' } });
+    const artsClub = await prisma.organizerEntity.findFirst({ where: { name: 'Arts Club' } });
+    const quizClub = await prisma.organizerEntity.findFirst({ where: { name: 'Quiz Club' } });
+
     // Ensure organizer assignments exist
     if (organizerUser.role === 'ORGANIZER') {
-        const entitiesToAssign = [cseDept, eceDept, chemDept, mechDept, eeeDept, aidsDept, civilDept, itDept].filter(Boolean);
+        const entitiesToAssign = [cseDept, eceDept, chemDept, mechDept, eeeDept, aidsDept, civilDept, itDept, musicClub, dramatixClub, cyberClub, muthamizhClub, artsClub, quizClub].filter(Boolean);
         for (const ent of entitiesToAssign) {
             await prisma.organizerAssignment.upsert({
                 where: {
@@ -95,10 +103,11 @@ async function seedEvents() {
             contactPerson: 'Prof. S. Anand / Cryptera Student Core',
             contactEmail: 'cryptera2k26@college.edu',
             activities: [
+                // DAY 1 - TECHNICAL
                 {
                     name: 'ByteCraft: Algorithmic Duel',
                     description: 'Time-pressured competitive coding sprint testing advanced data structures, graph algorithms, and dynamic programming.',
-                    category: 'Coding',
+                    category: 'Technical',
                     dayNumber: 1,
                     startTime: new Date('2026-11-20T10:00:00.000Z'),
                     endTime: new Date('2026-11-20T12:30:00.000Z'),
@@ -113,10 +122,10 @@ async function seedEvents() {
                 {
                     name: 'Bug Blitz: Binary & Reverse Engineering',
                     description: 'Decompile binaries, patch zero-day memory leaks, and extract encrypted flags in this fast-paced debugging marathon.',
-                    category: 'Cybersecurity',
+                    category: 'Technical',
                     dayNumber: 1,
-                    startTime: new Date('2026-11-20T14:00:00.000Z'),
-                    endTime: new Date('2026-11-20T16:30:00.000Z'),
+                    startTime: new Date('2026-11-20T13:30:00.000Z'),
+                    endTime: new Date('2026-11-20T16:00:00.000Z'),
                     venue: 'CSE Systems Centre (Room 302)',
                     maxParticipants: 80,
                     availableSeats: 54,
@@ -126,34 +135,130 @@ async function seedEvents() {
                     eligibilityRules: 'Teams of up to 2. Ghidra and GDB tools provided.'
                 },
                 {
-                    name: 'WebScape: 8-Hour Full-Stack Sprint',
+                    name: 'WebScape: 6-Hour AI Full-Stack Sprint',
                     description: 'Build an operational AI-integrated web solution addressing a surprise social impact problem statement announced at 9:00 AM.',
-                    category: 'Hackathon',
-                    dayNumber: 2,
-                    startTime: new Date('2026-11-21T09:30:00.000Z'),
-                    endTime: new Date('2026-11-21T15:30:00.000Z'),
-                    venue: 'Computing Lab 3 & Central Quad',
-                    maxParticipants: 120,
-                    availableSeats: 88,
+                    category: 'Technical',
+                    dayNumber: 1,
+                    startTime: new Date('2026-11-20T10:30:00.000Z'),
+                    endTime: new Date('2026-11-20T16:30:00.000Z'),
+                    venue: 'Computing Lab 3',
+                    maxParticipants: 80,
+                    availableSeats: 48,
                     fee: 0,
                     requiresSeparateRegistration: true,
                     requiresOverallRegistration: true,
                     eligibilityRules: 'Teams of 2 to 4. React, Node, Python, or Go stacks accepted.'
                 },
+
+                // DAY 1 - NON-TECHNICAL & GAMING
                 {
-                    name: 'RigCraft: PC Building & Overclocking Showdown',
+                    name: 'Valorant & BGMI Esports Showdown',
+                    description: '5v5 tactical shooter and mobile battle royale knockout matches projected on the big auditorium screen.',
+                    category: 'Gaming & Non-Tech',
+                    dayNumber: 1,
+                    startTime: new Date('2026-11-20T11:00:00.000Z'),
+                    endTime: new Date('2026-11-20T15:30:00.000Z'),
+                    venue: 'Multimedia Hall B',
+                    maxParticipants: 120,
+                    availableSeats: 80,
+                    fee: 0,
+                    requiresSeparateRegistration: true,
+                    requiresOverallRegistration: true,
+                    eligibilityRules: 'Bring personal mobile/peripherals. Tournament bracket format.'
+                },
+                {
+                    name: 'Cinephile: Pop Culture & Movie Trivia',
+                    description: 'Exciting audio-visual buzzer quiz on Hollywood, Kollywood, Anime, and TV series lore.',
+                    category: 'Non-Technical',
+                    dayNumber: 1,
+                    startTime: new Date('2026-11-20T14:30:00.000Z'),
+                    endTime: new Date('2026-11-20T16:30:00.000Z'),
+                    venue: 'CSE Seminar Audi 2',
+                    maxParticipants: 90,
+                    availableSeats: 65,
+                    fee: 0,
+                    requiresSeparateRegistration: true,
+                    requiresOverallRegistration: true,
+                    eligibilityRules: 'Teams of 2 members. Multi-round buzzer face-off.'
+                },
+
+                // DAY 2 - TECHNICAL
+                {
+                    name: 'RigCraft: PC Hardware Speed Build & Overclock',
                     description: 'Speed assembly of custom liquid-cooled PC gaming rigs with benchmark thermal optimization and component diagnostics.',
-                    category: 'Hardware',
+                    category: 'Technical',
                     dayNumber: 2,
-                    startTime: new Date('2026-11-21T14:00:00.000Z'),
-                    endTime: new Date('2026-11-21T16:30:00.000Z'),
+                    startTime: new Date('2026-11-21T09:30:00.000Z'),
+                    endTime: new Date('2026-11-21T12:00:00.000Z'),
                     venue: 'CSE Seminar Hall Ground Foyer',
-                    maxParticipants: 50,
-                    availableSeats: 35,
+                    maxParticipants: 60,
+                    availableSeats: 38,
                     fee: 0,
                     requiresSeparateRegistration: true,
                     requiresOverallRegistration: true,
                     eligibilityRules: 'Individual competition. Components and test benches provided on-site.'
+                },
+                {
+                    name: 'PaperTech: Next-Gen IEEE Research Presentation',
+                    description: 'Present cutting-edge research in Quantum Computing, Distributed Systems, and Edge Intelligence.',
+                    category: 'Technical',
+                    dayNumber: 2,
+                    startTime: new Date('2026-11-21T10:00:00.000Z'),
+                    endTime: new Date('2026-11-21T13:00:00.000Z'),
+                    venue: 'Conference Room 101',
+                    maxParticipants: 50,
+                    availableSeats: 30,
+                    fee: 0,
+                    requiresSeparateRegistration: true,
+                    requiresOverallRegistration: true,
+                    eligibilityRules: 'Peer-reviewed research paper submissions. 10-minute presentation.'
+                },
+
+                // DAY 2 - NON-TECHNICAL & CULTURAL / FUN
+                {
+                    name: 'Sherlock In The Quad: Campus Mystery Hunt',
+                    description: 'A fast-paced clue-solving treasure hunt across the college campus to crack a fictitious cyber mystery.',
+                    category: 'Non-Technical',
+                    dayNumber: 2,
+                    startTime: new Date('2026-11-21T10:30:00.000Z'),
+                    endTime: new Date('2026-11-21T13:30:00.000Z'),
+                    venue: 'Central Campus Quadrangle',
+                    maxParticipants: 100,
+                    availableSeats: 60,
+                    fee: 0,
+                    requiresSeparateRegistration: true,
+                    requiresOverallRegistration: true,
+                    eligibilityRules: 'Teams of 3. Mobile clues scanned via QR codes on campus.'
+                },
+                {
+                    name: 'MemeCrypt: Marketing & UI Meme Roast',
+                    description: 'Create viral satirical product posters, tech memes, and pitch hilarious startup ideas to our panel.',
+                    category: 'Non-Technical',
+                    dayNumber: 2,
+                    startTime: new Date('2026-11-21T14:00:00.000Z'),
+                    endTime: new Date('2026-11-21T16:00:00.000Z'),
+                    venue: 'CSE Seminar Hall 1',
+                    maxParticipants: 70,
+                    availableSeats: 52,
+                    fee: 0,
+                    requiresSeparateRegistration: true,
+                    requiresOverallRegistration: true,
+                    eligibilityRules: 'Original creative humor only. No defamatory content.'
+                },
+                {
+                    name: 'Cosplay & Beatbox Cypher: Pop-Culture Mashup',
+                    description: 'Show off character cosplays, open-mic rap, and live beatboxing to close out the symposium in style.',
+                    category: 'Cultural & Fun',
+                    dayNumber: 2,
+                    startTime: new Date('2026-11-21T15:30:00.000Z'),
+                    endTime: new Date('2026-11-21T17:30:00.000Z'),
+                    venue: 'Main Amphitheatre Foyer',
+                    maxParticipants: 150,
+                    availableSeats: 120,
+                    fee: 0,
+                    requiresSeparateRegistration: true,
+                    requiresOverallRegistration: true,
+                    eligibilityRules: 'Open to all registered attendees. Props and audio tracks permitted.'
                 }
             ]
         },
@@ -714,14 +819,14 @@ async function seedEvents() {
         },
 
         // ---------------------------------------------------------------------
-        // 9. REGULAR EVENT: Campus Acoustic Unplugged Night (Single Cultural Evening)
+        // 9. REGULAR EVENT: Campus Acoustic Unplugged Night (Music Club - Cultural)
         // ---------------------------------------------------------------------
         {
             title: 'Campus Acoustic Unplugged & Indie Music Night',
             description: 'An enchanting evening of live acoustic melodies, vocal harmonies, violin solos, and indie fusion performed by student musicians across all departments at the open air theatre.',
             category: 'Cultural',
-            department: 'Music Club',
-            organizerEntityId: null,
+            department: musicClub ? musicClub.name : 'Music Club',
+            organizerEntityId: musicClub ? musicClub.id : null,
             venue: 'Open Air Amphitheatre',
             totalSeats: 350,
             date: new Date('2026-11-14T17:00:00.000Z'),
@@ -737,6 +842,87 @@ async function seedEvents() {
             isDemo: true,
             contactPerson: 'Music Club Secretary',
             contactEmail: 'music@college.edu',
+            activities: []
+        },
+
+        // ---------------------------------------------------------------------
+        // 10. REGULAR EVENT: Natya Tarang '26 (Dramatix - Cultural, Inter-College)
+        // ---------------------------------------------------------------------
+        {
+            title: "Natya Tarang '26: Dance & Street Theatre Extravaganza",
+            description: 'A grand inter-college cultural showcase celebrating theatrical expression, thematic Western and Classical dance troupes, mime acts, and socio-dramatic street plays from top collegiate teams.',
+            category: 'Cultural',
+            department: dramatixClub ? dramatixClub.name : 'Dramatix',
+            organizerEntityId: dramatixClub ? dramatixClub.id : null,
+            venue: 'CIT Main Auditorium & Open Stage',
+            totalSeats: 400,
+            date: new Date('2026-11-28T15:00:00.000Z'),
+            endDate: new Date('2026-11-28T20:30:00.000Z'),
+            deadline: new Date('2026-11-25T23:59:59.000Z'),
+            internalRegOpensAt: new Date('2026-10-15T00:00:00.000Z'),
+            externalRegOpensAt: new Date('2026-10-20T00:00:00.000Z'),
+            eventType: 'INTER_COLLEGE',
+            eventFormat: 'REGULAR',
+            numberOfDays: 1,
+            externalParticipationAllowed: true,
+            eligibleParticipants: 'Students from all recognized Engineering, Arts & Science institutions',
+            isDemo: true,
+            contactPerson: 'Sanjana V (Dramatix President)',
+            contactEmail: 'dramatix@college.edu',
+            activities: []
+        },
+
+        // ---------------------------------------------------------------------
+        // 11. REGULAR EVENT: CyberShield CTF '26 (Cyber Club - Technical)
+        // ---------------------------------------------------------------------
+        {
+            title: "CyberShield CTF '26: National Cybersecurity Challenge",
+            description: 'An 8-hour live offensive & defensive capture-the-flag hackathon covering web app vulnerability analysis, memory forensics, steganography, and cryptography challenges designed by industry red-teamers.',
+            category: 'Technical',
+            department: cyberClub ? cyberClub.name : 'Cyber Club',
+            organizerEntityId: cyberClub ? cyberClub.id : null,
+            venue: 'Cybersecurity Centre Lab (Block C)',
+            totalSeats: 120,
+            date: new Date('2026-12-01T09:00:00.000Z'),
+            endDate: new Date('2026-12-01T17:00:00.000Z'),
+            deadline: new Date('2026-11-29T23:59:59.000Z'),
+            internalRegOpensAt: new Date('2026-10-14T00:00:00.000Z'),
+            externalRegOpensAt: new Date('2026-10-22T00:00:00.000Z'),
+            eventType: 'INTER_COLLEGE',
+            eventFormat: 'REGULAR',
+            numberOfDays: 1,
+            externalParticipationAllowed: true,
+            eligibleParticipants: 'Open to ethical hackers and computing scholars across India',
+            isDemo: true,
+            contactPerson: 'Aditya Mohan',
+            contactEmail: 'cyberclub@college.edu',
+            activities: []
+        },
+
+        // ---------------------------------------------------------------------
+        // 12. REGULAR EVENT: Sangamam: Tamil Heritage (Muthamizh Mandram - Cultural)
+        // ---------------------------------------------------------------------
+        {
+            title: 'Sangamam: Tamil Heritage, Poetry & Pattimandram',
+            description: 'A cultural evening celebrating classical and folk Tamil literature, dramatic oratory, kavithai recitation, traditional Parai Isai performances, and the grand annual student Pattimandram debate.',
+            category: 'Cultural',
+            department: muthamizhClub ? muthamizhClub.name : 'Muthamizh Mandram',
+            organizerEntityId: muthamizhClub ? muthamizhClub.id : null,
+            venue: 'Kamarajar Arangam (Main Audi)',
+            totalSeats: 350,
+            date: new Date('2026-12-10T14:30:00.000Z'),
+            endDate: new Date('2026-12-10T19:00:00.000Z'),
+            deadline: new Date('2026-12-08T23:59:59.000Z'),
+            internalRegOpensAt: new Date('2026-10-14T00:00:00.000Z'),
+            externalRegOpensAt: null,
+            eventType: 'INTRA_COLLEGE',
+            eventFormat: 'REGULAR',
+            numberOfDays: 1,
+            externalParticipationAllowed: false,
+            eligibleParticipants: 'Coimbatore Institute of Technology Students Only',
+            isDemo: true,
+            contactPerson: 'Selvan M. Thangavel',
+            contactEmail: 'muthamizh@college.edu',
             activities: []
         }
     ];
