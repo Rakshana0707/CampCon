@@ -4,21 +4,122 @@ import { AppContext } from "../context/AppContext";
 import { FaUser, FaEnvelope, FaLock, FaBuilding, FaChevronRight, FaArrowLeft } from "react-icons/fa";
 import DistrictCollegeSelector from "../components/DistrictCollegeSelector";
 
+const STREAM_CONFIG = {
+    "B.E.": {
+        name: "B.E. (Bachelor of Engineering)",
+        maxYears: 4,
+        courses: [
+            "Computer Science and Engineering",
+            "Information Technology",
+            "Electrical and Electronics Engineering",
+            "Electronics and Communication Engineering",
+            "Mechanical Engineering",
+            "Civil Engineering",
+            "Electronics Engineering (VLSI Design and Technology)"
+        ]
+    },
+    "B.Tech.": {
+        name: "B.Tech. (Bachelor of Technology)",
+        maxYears: 4,
+        courses: [
+            "Information Technology",
+            "Artificial Intelligence and Data Science",
+            "Chemical Engineering",
+            "Computer Science and Business Systems"
+        ]
+    },
+    "M.Sc. (Integrated)": {
+        name: "M.Sc. Integrated (5 Years)",
+        maxYears: 5,
+        courses: [
+            "Software Systems",
+            "Data Science",
+            "Decision and Computing Sciences",
+            "Artificial Intelligence and Machine Learning"
+        ]
+    },
+    "M.E. / M.Tech.": {
+        name: "M.E. / M.Tech. (Postgraduate)",
+        maxYears: 2,
+        courses: [
+            "Computer Science and Engineering",
+            "VLSI Design",
+            "Embedded and Real Time Systems",
+            "Construction Management",
+            "Structural Engineering",
+            "Environmental Engineering and Management"
+        ]
+    },
+    "MCA": {
+        name: "MCA (Master of Computer Applications)",
+        maxYears: 2,
+        courses: [
+            "Computer Applications"
+        ]
+    },
+    "MBA": {
+        name: "MBA (Master of Business Administration)",
+        maxYears: 2,
+        courses: [
+            "Business Administration"
+        ]
+    },
+    "Other": {
+        name: "Other Stream / Degree",
+        maxYears: 5,
+        courses: []
+    }
+};
+
 function Register() {
     const { registerUser, currentUser } = useContext(AppContext);
     const navigate = useNavigate();
     const location = useLocation();
 
+    const [selectedStream, setSelectedStream] = useState("B.E.");
+    const [selectedCourse, setSelectedCourse] = useState("Computer Science and Engineering");
+    const [customCourse, setCustomCourse] = useState("");
+
     const [form, setForm] = useState({
         name: "",
         email: "",
         password: "",
-        department: "",
+        department: "B.E. Computer Science and Engineering",
         rollNumber: "",
         year: "I Year",
         role: "Student",
         collegeName: "Coimbatore Institute of Technology"
     });
+
+    const availableYears = (() => {
+        const cfg = STREAM_CONFIG[selectedStream] || STREAM_CONFIG["B.E."];
+        const max = cfg.maxYears || 4;
+        const years = ["I Year", "II Year"];
+        if (max >= 3) years.push("III Year");
+        if (max >= 4) years.push("IV Year");
+        if (max >= 5) years.push("V Year");
+        years.push("Staff / Faculty");
+        return years;
+    })();
+
+    const handleStreamChange = (e) => {
+        const stream = e.target.value;
+        setSelectedStream(stream);
+        const cfg = STREAM_CONFIG[stream];
+        if (cfg && cfg.courses.length > 0) {
+            setSelectedCourse(cfg.courses[0]);
+        } else {
+            setSelectedCourse("Other");
+        }
+        const max = cfg?.maxYears || 4;
+        if (max < 5 && form.year === "V Year") {
+            setForm(prev => ({ ...prev, year: "I Year" }));
+        } else if (max < 4 && form.year === "IV Year") {
+            setForm(prev => ({ ...prev, year: "I Year" }));
+        } else if (max < 3 && form.year === "III Year") {
+            setForm(prev => ({ ...prev, year: "I Year" }));
+        }
+    };
 
     // External institution selection state (managed by DistrictCollegeSelector)
     const [externalInstitution, setExternalInstitution] = useState({
@@ -79,9 +180,22 @@ function Register() {
 
         setIsSubmitting(true);
 
+        const effectiveDept = (selectedStream === "Other" || selectedCourse === "Other")
+            ? customCourse.trim()
+            : (selectedCourse.startsWith("M.Sc.") || selectedCourse.startsWith("MCA") || selectedCourse.startsWith("MBA")
+                ? selectedCourse
+                : `${selectedStream} ${selectedCourse}`);
+
+        if (!effectiveDept) {
+            alert("Please specify your course / department name.");
+            setIsSubmitting(false);
+            return;
+        }
+
         const submissionData = isExternal
             ? {
                 ...form,
+                department: effectiveDept,
                 collegeName: externalInstitution.collegeName,
                 affiliationType: "EXTERNAL",
                 collegeState: externalInstitution.state,
@@ -90,6 +204,7 @@ function Register() {
             }
             : {
                 ...form,
+                department: effectiveDept,
                 collegeName: "Coimbatore Institute of Technology",
                 affiliationType: "INTERNAL"
             };
@@ -185,27 +300,51 @@ function Register() {
                                 </div>
 
                                 <div className="row">
-                                    <div className="col-md-6 mb-3">
-                                        <label htmlFor="regDept" className="text-white form-label fw-medium">Department <span className="text-danger">*</span></label>
-                                        <div className="input-group">
-                                            <span className="input-group-text bg-dark border-secondary text-muted">
-                                                <FaBuilding />
-                                            </span>
+                                    <div className="col-md-4 mb-3">
+                                        <label htmlFor="regStream" className="text-white form-label fw-medium">Stream / Degree <span className="text-danger">*</span></label>
+                                        <select
+                                            id="regStream"
+                                            className="form-select bg-dark text-white border-secondary"
+                                            value={selectedStream}
+                                            onChange={handleStreamChange}
+                                            disabled={isSubmitting}
+                                        >
+                                            {Object.keys(STREAM_CONFIG).map((stream) => (
+                                                <option key={stream} value={stream}>{STREAM_CONFIG[stream].name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="col-md-5 mb-3">
+                                        <label htmlFor="regCourse" className="text-white form-label fw-medium">Course / Branch <span className="text-danger">*</span></label>
+                                        {selectedStream === "Other" ? (
                                             <input
-                                                id="regDept"
+                                                id="regCourse"
                                                 className="form-control"
-                                                placeholder="Computer Science"
-                                                name="department"
-                                                value={form.department}
-                                                onChange={handleChange}
+                                                placeholder="e.g. B.Sc. Computer Science"
+                                                value={customCourse}
+                                                onChange={(e) => setCustomCourse(e.target.value)}
                                                 disabled={isSubmitting}
                                                 required
                                             />
-                                        </div>
+                                        ) : (
+                                            <select
+                                                id="regCourse"
+                                                className="form-select bg-dark text-white border-secondary"
+                                                value={selectedCourse}
+                                                onChange={(e) => setSelectedCourse(e.target.value)}
+                                                disabled={isSubmitting}
+                                            >
+                                                {STREAM_CONFIG[selectedStream]?.courses.map((course) => (
+                                                    <option key={course} value={course}>{course}</option>
+                                                ))}
+                                                <option value="Other">Other / Not Listed</option>
+                                            </select>
+                                        )}
                                     </div>
 
-                                    <div className="col-md-6 mb-3">
-                                        <label htmlFor="regYear" className="text-white form-label fw-medium">Year of Study / Staff</label>
+                                    <div className="col-md-3 mb-3">
+                                        <label htmlFor="regYear" className="text-white form-label fw-medium">Year of Study</label>
                                         <select
                                             id="regYear"
                                             className="form-select"
@@ -214,15 +353,29 @@ function Register() {
                                             onChange={handleChange}
                                             disabled={form.role !== "Student" || isSubmitting}
                                         >
-                                            <option value="I Year">I Year</option>
-                                            <option value="II Year">II Year</option>
-                                            <option value="III Year">III Year</option>
-                                            <option value="IV Year">IV Year</option>
-                                            <option value="V Year">V Year (Integrated M.Sc.)</option>
-                                            <option value="Staff">Staff / Faculty</option>
+                                            {availableYears.map((yr) => (
+                                                <option key={yr} value={yr}>{yr}</option>
+                                            ))}
                                         </select>
                                     </div>
                                 </div>
+
+                                {selectedStream !== "Other" && selectedCourse === "Other" && (
+                                    <div className="mb-3">
+                                        <label htmlFor="customCourseInput" className="text-white form-label fw-medium fs-8">
+                                            Specify Course / Department Name <span className="text-danger">*</span>
+                                        </label>
+                                        <input
+                                            id="customCourseInput"
+                                            className="form-control"
+                                            placeholder="e.g. Biotechnology, Robotics, etc."
+                                            value={customCourse}
+                                            onChange={(e) => setCustomCourse(e.target.value)}
+                                            disabled={isSubmitting}
+                                            required
+                                        />
+                                    </div>
+                                )}
 
                                 <div className="row">
                                     <div className="col-md-6 mb-3">
