@@ -13,6 +13,8 @@ prismaMock.notification = { findUnique: vi.fn(), create: vi.fn(), findMany: vi.f
 prismaMock.bookmark = { findUnique: vi.fn(), create: vi.fn(), findMany: vi.fn(), update: vi.fn() };
 prismaMock.organizerEntity = { findUnique: vi.fn(), create: vi.fn(), findMany: vi.fn(), update: vi.fn(), count: vi.fn() };
 prismaMock.organizerAssignment = { findUnique: vi.fn(), create: vi.fn(), findMany: vi.fn(), delete: vi.fn(), count: vi.fn() };
+prismaMock.symposiumActivity = { findUnique: vi.fn(), findFirst: vi.fn(), create: vi.fn(), findMany: vi.fn(), update: vi.fn(), delete: vi.fn(), count: vi.fn() };
+prismaMock.activityRegistration = { findUnique: vi.fn(), findFirst: vi.fn(), create: vi.fn(), findMany: vi.fn(), update: vi.fn(), delete: vi.fn(), count: vi.fn() };
 prismaMock.$transaction = vi.fn();
 prismaMock.$queryRaw = vi.fn();
 

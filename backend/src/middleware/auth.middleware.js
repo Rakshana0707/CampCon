@@ -26,7 +26,14 @@ const authenticateToken = async (req, res, next) => {
                 role: true, 
                 name: true, 
                 department: true,
+                rollNumber: true,
                 collegeName: true,
+                collegeState: true,
+                collegeDistrict: true,
+                institutionId: true,
+                institution: {
+                    select: { id: true, code: true, name: true, state: true, district: true, institutionType: true, isActive: true, status: true }
+                },
                 affiliationStatus: true,
                 isActive: true,
                 organizerAssignments: {
@@ -77,7 +84,14 @@ const optionalAuth = async (req, res, next) => {
                 role: true,
                 name: true,
                 department: true,
+                rollNumber: true,
                 collegeName: true,
+                collegeState: true,
+                collegeDistrict: true,
+                institutionId: true,
+                institution: {
+                    select: { id: true, code: true, name: true, state: true, district: true, institutionType: true, isActive: true, status: true }
+                },
                 affiliationStatus: true,
                 isActive: true,
                 organizerAssignments: {

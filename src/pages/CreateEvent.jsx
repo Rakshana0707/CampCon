@@ -19,7 +19,13 @@ function CreateEvent() {
         venue: "",
         date: "",
         time: "",
+        endDate: "",
+        endTime: "05:00 PM",
         deadline: "",
+        internalRegOpensAt: "",
+        internalRegOpensTime: "09:00 AM",
+        externalRegOpensAt: "",
+        externalRegOpensTime: "09:00 AM",
         seats: "",
         description: "",
         prizeDetails: "",
@@ -29,6 +35,8 @@ function CreateEvent() {
         requiresApproval: false,
         // Event Classification & Eligibility (Required selection, no silent default)
         eventType: "",
+        eventFormat: "REGULAR", // REGULAR or SYMPOSIUM
+        numberOfDays: 1,
         organizerEntityId: "",
         externalParticipationAllowed: false,
         eligibleParticipants: "",
@@ -82,7 +90,13 @@ function CreateEvent() {
                     venue: targetEvent.venue || "",
                     date: targetEvent.date || "",
                     time: targetEvent.time || "",
+                    endDate: targetEvent.endDate || targetEvent.date || "",
+                    endTime: targetEvent.endTime || "05:00 PM",
                     deadline: targetEvent.deadline || "",
+                    internalRegOpensAt: targetEvent.internalRegOpensAt || "",
+                    internalRegOpensTime: targetEvent.internalRegOpensTime || "09:00 AM",
+                    externalRegOpensAt: targetEvent.externalRegOpensAt || "",
+                    externalRegOpensTime: targetEvent.externalRegOpensTime || "09:00 AM",
                     seats: targetEvent.seats || "",
                     description: targetEvent.description || "",
                     prizeDetails: targetEvent.prizeDetails || "",
@@ -91,9 +105,11 @@ function CreateEvent() {
                     image: targetEvent.image || "",
                     requiresApproval: targetEvent.requiresApproval || false,
                     eventType: targetEvent.eventType || "INTRA_COLLEGE",
+                    eventFormat: targetEvent.eventFormat || "REGULAR",
+                    numberOfDays: targetEvent.numberOfDays || 1,
                     organizerEntityId: targetEvent.organizerEntityId?.toString() || "",
                     externalParticipationAllowed: targetEvent.externalParticipationAllowed || false,
-                    eligibleParticipants: targetEvent.eligibleParticipants || "Our College Students Only",
+                    eligibleParticipants: targetEvent.eligibleParticipants || "Coimbatore Institute of Technology Students Only",
                     contactPerson: targetEvent.contactPerson || "",
                     contactEmail: targetEvent.contactEmail || ""
                 });
@@ -131,7 +147,7 @@ function CreateEvent() {
                     updated.eligibleParticipants = "Open to participants from multiple colleges";
                     updated.externalParticipationAllowed = true;
                 } else {
-                    updated.eligibleParticipants = "Our College Students Only";
+                    updated.eligibleParticipants = "Coimbatore Institute of Technology Students Only";
                     updated.externalParticipationAllowed = false;
                 }
             }
@@ -150,7 +166,7 @@ function CreateEvent() {
             eventType: type,
             eligibleParticipants: type === "INTER_COLLEGE" 
                 ? "Open to participants from multiple colleges" 
-                : "Our College Students Only",
+                : "Coimbatore Institute of Technology Students Only",
             externalParticipationAllowed: type === "INTER_COLLEGE"
         }));
 
@@ -170,39 +186,73 @@ function CreateEvent() {
         }
 
         if (!form.date) {
-            newErrors.date = "Event date is required.";
+            newErrors.date = "Event start date is required.";
         } else if (isNaN(new Date(form.date).getTime())) {
-            newErrors.date = "Invalid event date.";
+            newErrors.date = "Invalid event start date.";
+        }
+
+        if (form.endDate && isNaN(new Date(form.endDate).getTime())) {
+            newErrors.endDate = "Invalid event end date.";
+        }
+
+        // Event Format Validation & Duration Calculation
+        if (form.eventFormat === "SYMPOSIUM") {
+            if (!form.endDate) {
+                newErrors.endDate = "Symposium end date is required.";
+            } else {
+                const sDate = new Date(`${form.date}T00:00:00`);
+                const eDate = new Date(`${form.endDate}T00:00:00`);
+                if (eDate < sDate) {
+                    newErrors.endDate = "Symposium end date cannot be earlier than start date.";
+                } else {
+                    const diffTime = Math.abs(eDate - sDate);
+                    const calculatedDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                    if (form.numberOfDays && parseInt(form.numberOfDays, 10) !== calculatedDays) {
+                        newErrors.numberOfDays = `Number of days (${form.numberOfDays}) must match the calendar schedule (${calculatedDays} day${calculatedDays > 1 ? 's' : ''}).`;
+                    }
+                }
+            }
+        }
+
+        const effectiveEndDate = form.endDate || form.date;
+        if (form.date && effectiveEndDate) {
+            const startDay = new Date(`${form.date}T00:00:00`);
+            const endDay = new Date(`${effectiveEndDate}T00:00:00`);
+            if (endDay < startDay) {
+                newErrors.endDate = "Event end date cannot be earlier than start date.";
+            }
         }
 
         if (!form.deadline) {
             newErrors.deadline = "Registration deadline is required.";
         } else if (isNaN(new Date(form.deadline).getTime())) {
             newErrors.deadline = "Invalid registration deadline.";
+        } else if (effectiveEndDate) {
+            const deadlineDate = new Date(`${form.deadline}T00:00:00`);
+            const endDay = new Date(`${effectiveEndDate}T00:00:00`);
+            if (deadlineDate > endDay) {
+                newErrors.deadline = "Registration deadline cannot be after the event end date.";
+            }
         }
 
-        if (Object.keys(newErrors).length === 0) {
-            const parseDateTime = (dateStr, timeStr) => {
-                const d = new Date(`${dateStr}T00:00:00`);
-                if (timeStr) {
-                    const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)?/i);
-                    if (match) {
-                        let hours = parseInt(match[1]);
-                        const mins = parseInt(match[2]);
-                        const modifier = match[3];
-                        if (modifier && modifier.toUpperCase() === 'PM' && hours < 12) hours += 12;
-                        if (modifier && modifier.toUpperCase() === 'AM' && hours === 12) hours = 0;
-                        d.setHours(hours, mins, 0, 0);
-                    }
+        // Registration Opening Dates Validation
+        if (form.internalRegOpensAt) {
+            const internalOpens = new Date(`${form.internalRegOpensAt}T00:00:00`);
+            const deadlineDate = form.deadline ? new Date(`${form.deadline}T00:00:00`) : null;
+            if (deadlineDate && internalOpens > deadlineDate) {
+                newErrors.internalRegOpensAt = "Internal registration opening date cannot be after the deadline.";
+            }
+        }
+
+        if (form.eventType === "INTER_COLLEGE" && form.externalParticipationAllowed) {
+            if (!form.externalRegOpensAt) {
+                newErrors.externalRegOpensAt = "External student registration opening date is required for Inter-College events.";
+            } else {
+                const externalOpens = new Date(`${form.externalRegOpensAt}T00:00:00`);
+                const deadlineDate = form.deadline ? new Date(`${form.deadline}T00:00:00`) : null;
+                if (deadlineDate && externalOpens > deadlineDate) {
+                    newErrors.externalRegOpensAt = "External registration opening date cannot be after the deadline.";
                 }
-                return d;
-            };
-
-            const deadlineDate = new Date(`${form.deadline}T00:00:00`);
-            const eventDayOnly = new Date(`${form.date}T00:00:00`);
-
-            if (deadlineDate > eventDayOnly) {
-                newErrors.deadline = "Deadline cannot be after the event date.";
             }
         }
 
@@ -288,6 +338,81 @@ function CreateEvent() {
                                 </h5>
 
                                 <div className="row">
+                                    {/* Event Format Selection (Regular Event vs Symposium) */}
+                                    <div className="col-12 mb-4">
+                                         <label className="form-label text-white fw-bold d-block fs-6">
+                                             Event Format <span className="text-danger">*</span>
+                                         </label>
+                                         <p className="text-muted fs-8 mb-2">
+                                             Choose whether this is a single regular event or a multi-activity departmental/institutional symposium.
+                                         </p>
+                                         <div className="row g-3">
+                                             <div className="col-md-6">
+                                                 <div 
+                                                     className={`p-3 rounded-3 border h-100 transition-all ${
+                                                         form.eventFormat === "REGULAR" 
+                                                             ? "border-success bg-success bg-opacity-15 shadow-sm" 
+                                                             : "border-secondary bg-dark bg-opacity-40"
+                                                     }`}
+                                                     onClick={() => setForm(prev => ({ ...prev, eventFormat: "REGULAR" }))}
+                                                     style={{ cursor: "pointer" }}
+                                                 >
+                                                     <div className="form-check d-flex align-items-start gap-2">
+                                                         <input 
+                                                             className="form-check-input mt-1" 
+                                                             type="radio" 
+                                                             name="eventFormat" 
+                                                             id="formatRegular" 
+                                                             value="REGULAR"
+                                                             checked={form.eventFormat === "REGULAR"}
+                                                             onChange={() => setForm(prev => ({ ...prev, eventFormat: "REGULAR" }))}
+                                                         />
+                                                         <label className="form-check-label w-100" htmlFor="formatRegular" style={{ cursor: "pointer" }}>
+                                                             <span className="fw-bold text-white d-block fs-6">
+                                                                 🎯 Regular Event
+                                                             </span>
+                                                             <span className="text-muted fs-8 d-block mt-1">
+                                                                 Standard single-session workshop, hackathon, seminar, or tournament.
+                                                             </span>
+                                                         </label>
+                                                     </div>
+                                                 </div>
+                                             </div>
+
+                                             <div className="col-md-6">
+                                                 <div 
+                                                     className={`p-3 rounded-3 border h-100 transition-all ${
+                                                         form.eventFormat === "SYMPOSIUM" 
+                                                             ? "border-warning bg-warning bg-opacity-15 shadow-sm" 
+                                                             : "border-secondary bg-dark bg-opacity-40"
+                                                     }`}
+                                                     onClick={() => setForm(prev => ({ ...prev, eventFormat: "SYMPOSIUM" }))}
+                                                     style={{ cursor: "pointer" }}
+                                                 >
+                                                     <div className="form-check d-flex align-items-start gap-2">
+                                                         <input 
+                                                             className="form-check-input mt-1" 
+                                                             type="radio" 
+                                                             name="eventFormat" 
+                                                             id="formatSymposium" 
+                                                             value="SYMPOSIUM"
+                                                             checked={form.eventFormat === "SYMPOSIUM"}
+                                                             onChange={() => setForm(prev => ({ ...prev, eventFormat: "SYMPOSIUM" }))}
+                                                         />
+                                                         <label className="form-check-label w-100" htmlFor="formatSymposium" style={{ cursor: "pointer" }}>
+                                                             <span className="fw-bold text-white d-block fs-6">
+                                                                 🏛️ Dedicated Symposium
+                                                             </span>
+                                                             <span className="text-muted fs-8 d-block mt-1">
+                                                                 Multi-day, multi-activity parent symposium featuring technical events, non-tech tracks, workshops, and two-tier registration.
+                                                             </span>
+                                                         </label>
+                                                     </div>
+                                                 </div>
+                                             </div>
+                                         </div>
+                                    </div>
+
                                     {/* Organizing Entity Selection */}
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label text-white fw-semibold">
@@ -475,56 +600,176 @@ function CreateEvent() {
                                 </div>
                             </div>
 
-                            {/* Timeline & Capacity Row */}
-                            <div className="row">
-                                <div className="col-md-3 mb-3">
-                                    <label className="form-label text-white fw-semibold">Event Date *</label>
-                                    <input
-                                        type="date"
-                                        className={`form-control ${errors.date ? 'is-invalid' : ''}`}
-                                        name="date"
-                                        value={form.date}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                    {errors.date && <div className="invalid-feedback d-block">{errors.date}</div>}
+                            {/* Timeline & Schedule */}
+                            <div className="card bg-white bg-opacity-5 border border-white border-opacity-10 p-3 mb-4 rounded-3">
+                                <h6 className="text-white fw-bold mb-3 d-flex align-items-center gap-2">
+                                    <i className="bi bi-calendar-event text-primary"></i> Event Schedule & Automatic Expiration
+                                </h6>
+                                <div className="row">
+                                    <div className="col-md-3 mb-3">
+                                        <label className="form-label text-white fw-semibold">Start Date *</label>
+                                        <input
+                                            type="date"
+                                            className={`form-control ${errors.date ? 'is-invalid' : ''}`}
+                                            name="date"
+                                            value={form.date}
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                        {errors.date && <div className="invalid-feedback d-block">{errors.date}</div>}
+                                    </div>
+                                    <div className="col-md-3 mb-3">
+                                        <label className="form-label text-white fw-semibold">Start Time *</label>
+                                        <input
+                                            type="text"
+                                            className={`form-control ${errors.time ? 'is-invalid' : ''}`}
+                                            name="time"
+                                            placeholder="e.g. 10:00 AM"
+                                            value={form.time}
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                        {errors.time && <div className="invalid-feedback d-block">{errors.time}</div>}
+                                    </div>
+                                    <div className="col-md-3 mb-3">
+                                        <label className="form-label text-white fw-semibold">End Date *</label>
+                                        <input
+                                            type="date"
+                                            className={`form-control ${errors.endDate ? 'is-invalid' : ''}`}
+                                            name="endDate"
+                                            value={form.endDate || form.date}
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                        {errors.endDate && <div className="invalid-feedback d-block">{errors.endDate}</div>}
+                                    </div>
+                                    <div className="col-md-3 mb-3">
+                                        <label className="form-label text-white fw-semibold">End Time</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            name="endTime"
+                                            placeholder="e.g. 05:00 PM"
+                                            value={form.endTime}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
                                 </div>
-                                <div className="col-md-3 mb-3">
-                                    <label className="form-label text-white fw-semibold">Event Time *</label>
-                                    <input
-                                        type="text"
-                                        className={`form-control ${errors.time ? 'is-invalid' : ''}`}
-                                        name="time"
-                                        placeholder="e.g. 10:00 AM"
-                                        value={form.time}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                    {errors.time && <div className="invalid-feedback d-block">{errors.time}</div>}
+
+                                {form.eventFormat === "SYMPOSIUM" && (
+                                    <div className="row mt-2">
+                                        <div className="col-md-4 mb-3">
+                                            <label className="form-label text-white fw-semibold">
+                                                Duration (Number of Days) *
+                                            </label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max="14"
+                                                className={`form-control ${errors.numberOfDays ? 'is-invalid' : ''}`}
+                                                name="numberOfDays"
+                                                value={form.numberOfDays}
+                                                onChange={handleChange}
+                                                required
+                                            />
+                                            {errors.numberOfDays && <div className="invalid-feedback d-block fw-bold">{errors.numberOfDays}</div>}
+                                            <small className="text-muted fs-8">
+                                                Calculated from {form.date || "Start"} to {form.endDate || form.date || "End"}.
+                                            </small>
+                                        </div>
+                                    </div>
+                                )}
+                                <div className="text-muted fs-8">
+                                    <i className="bi bi-info-circle me-1"></i> Events automatically transition from Ongoing to Completed after the scheduled end time, and expire from active listings after a 24-hour grace period.
                                 </div>
-                                <div className="col-md-3 mb-3">
-                                    <label className="form-label text-white fw-semibold">Reg. Deadline *</label>
-                                    <input
-                                        type="date"
-                                        className={`form-control ${errors.deadline ? 'is-invalid' : ''}`}
-                                        name="deadline"
-                                        value={form.deadline}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                    {errors.deadline && <div className="invalid-feedback d-block fw-bold">{errors.deadline}</div>}
+                            </div>
+
+                            {/* Registration Scheduling & Capacity */}
+                            <div className="card bg-white bg-opacity-5 border border-white border-opacity-10 p-3 mb-4 rounded-3">
+                                <h6 className="text-white fw-bold mb-3 d-flex align-items-center gap-2">
+                                    <i className="bi bi-clock-history text-info"></i> Registration Scheduling & Capacity
+                                </h6>
+                                <div className="row">
+                                    <div className="col-md-4 mb-3">
+                                        <label className="form-label text-white fw-semibold">Registration Deadline *</label>
+                                        <input
+                                            type="date"
+                                            className={`form-control ${errors.deadline ? 'is-invalid' : ''}`}
+                                            name="deadline"
+                                            value={form.deadline}
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                        {errors.deadline && <div className="invalid-feedback d-block fw-bold">{errors.deadline}</div>}
+                                    </div>
+                                    <div className="col-md-4 mb-3">
+                                        <label className="form-label text-white fw-semibold">Max Capacity (Seats) *</label>
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            name="seats"
+                                            placeholder="e.g. 150"
+                                            value={form.seats}
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                    </div>
                                 </div>
-                                <div className="col-md-3 mb-4">
-                                    <label className="form-label text-white fw-semibold">Max Capacity *</label>
-                                    <input
-                                        type="number"
-                                        className="form-control"
-                                        name="seats"
-                                        placeholder="e.g. 150"
-                                        value={form.seats}
-                                        onChange={handleChange}
-                                        required
-                                    />
+
+                                <div className="row">
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label text-white fw-semibold">
+                                            Internal College Registration Opens
+                                        </label>
+                                        <div className="d-flex gap-2">
+                                            <input
+                                                type="date"
+                                                className={`form-control ${errors.internalRegOpensAt ? 'is-invalid' : ''}`}
+                                                name="internalRegOpensAt"
+                                                value={form.internalRegOpensAt}
+                                                onChange={handleChange}
+                                            />
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                style={{ maxWidth: "120px" }}
+                                                name="internalRegOpensTime"
+                                                placeholder="09:00 AM"
+                                                value={form.internalRegOpensTime}
+                                                onChange={handleChange}
+                                            />
+                                        </div>
+                                        {errors.internalRegOpensAt && <div className="invalid-feedback d-block">{errors.internalRegOpensAt}</div>}
+                                        <small className="text-muted fs-8 mt-1 d-block">When verified students from our college can begin registering.</small>
+                                    </div>
+
+                                    {form.eventType === "INTER_COLLEGE" && form.externalParticipationAllowed && (
+                                        <div className="col-md-6 mb-3">
+                                            <label className="form-label text-white fw-semibold">
+                                                External College Registration Opens *
+                                            </label>
+                                            <div className="d-2 d-flex gap-2">
+                                                <input
+                                                    type="date"
+                                                    className={`form-control ${errors.externalRegOpensAt ? 'is-invalid' : ''}`}
+                                                    name="externalRegOpensAt"
+                                                    value={form.externalRegOpensAt}
+                                                    onChange={handleChange}
+                                                />
+                                                <input
+                                                    type="text"
+                                                    className="form-control"
+                                                    style={{ maxWidth: "120px" }}
+                                                    name="externalRegOpensTime"
+                                                    placeholder="09:00 AM"
+                                                    value={form.externalRegOpensTime}
+                                                    onChange={handleChange}
+                                                />
+                                            </div>
+                                            {errors.externalRegOpensAt && <div className="invalid-feedback d-block">{errors.externalRegOpensAt}</div>}
+                                            <small className="text-muted fs-8 mt-1 d-block">Can open at a different time from internal college registration.</small>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

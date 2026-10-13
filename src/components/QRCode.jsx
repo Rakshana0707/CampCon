@@ -1,81 +1,110 @@
 import React from "react";
 
-function QRCode({ value = "CC-1-1", size = 120 }) {
-    // A simple hash function to generate deterministic pseudo-random blocks
-    const getHash = (str) => {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            hash = str.charCodeAt(i) + ((hash << 5) - hash);
+function QRCode({ value = "CC-1-1", size = 148 }) {
+    // 21x21 is the standard Version 1 QR Code matrix dimension
+    const gridSize = 21;
+
+    // Multi-round FNV-1a / Murmur-style bit mixer so every character of the UUID
+    // produces a completely distinct, high-entropy 2D bit pattern
+    const getCellBit = (str, r, c) => {
+        let h = 2166136261 >>> 0;
+        const seedStr = `${str}:${r * 31 + c}:${c * 17 ^ r}`;
+        for (let i = 0; i < seedStr.length; i++) {
+            h ^= seedStr.charCodeAt(i);
+            h = Math.imul(h, 16777619) >>> 0;
         }
-        return Math.abs(hash);
+        h ^= h >>> 16;
+        h = Math.imul(h, 0x85ebca6b) >>> 0;
+        h ^= h >>> 13;
+        h = Math.imul(h, 0xc2b2ae35) >>> 0;
+        h ^= h >>> 16;
+        return (h & 1) === 1 ? 1 : 0;
     };
 
-    const hashValue = getHash(value);
-
-    // Generate a 15x15 QR grid pattern deterministically
-    const gridSize = 15;
-    const grid = [];
-
-    // Helper to check if a cell is in the 3 large corner locator blocks
-    // Top-left: (0,0) to (4,4)
-    // Top-right: (10,0) to (14,4)
-    // Bottom-left: (0,10) to (4,14)
-    const isLocatorBlock = (r, c) => {
-        if (r < 5 && c < 5) return true; // Top-Left
-        if (r < 5 && c >= gridSize - 5) return true; // Top-Right
-        if (r >= gridSize - 5 && c < 5) return true; // Bottom-Left
+    // Standard 7x7 Finder Pattern + 1-cell white separator
+    const isFinderArea = (r, c) => {
+        if (r < 8 && c < 8) return true; // Top-Left + separator
+        if (r < 8 && c >= gridSize - 8) return true; // Top-Right + separator
+        if (r >= gridSize - 8 && c < 8) return true; // Bottom-Left + separator
         return false;
     };
 
+    const getFinderBit = (r, c) => {
+        let lr = r;
+        let lc = c;
+        if (r < 8 && c >= gridSize - 8) {
+            lc = c - (gridSize - 7);
+        } else if (r >= gridSize - 8 && c < 8) {
+            lr = r - (gridSize - 7);
+        }
+        // White separator ring around 7x7 finder
+        if (lr < 0 || lr > 6 || lc < 0 || lc > 6) return 0;
+        // Outer 7x7 black ring
+        if (lr === 0 || lr === 6 || lc === 0 || lc === 6) return 1;
+        // Inner 5x5 white ring
+        if (lr === 1 || lr === 5 || lc === 1 || lc === 5) return 0;
+        // Center 3x3 black block
+        return 1;
+    };
+
+    const grid = [];
     for (let r = 0; r < gridSize; r++) {
         const row = [];
         for (let c = 0; c < gridSize; c++) {
-            if (isLocatorBlock(r, c)) {
-                // Renders outer border, middle gap, inner dot for locator blocks
-                const getLocatorValue = () => {
-                    const relativeR = r >= gridSize - 5 ? r - (gridSize - 5) : r;
-                    const relativeC = c >= gridSize - 5 ? c - (gridSize - 5) : c;
-                    // Outer square (width 5, border thickness 1)
-                    if (relativeR === 0 || relativeR === 4 || relativeC === 0 || relativeC === 4) return 1;
-                    // Inner dot (width 1, at center 2,2)
-                    if (relativeR === 2 && relativeC === 2) return 1;
-                    return 0;
-                };
-                row.push(getLocatorValue());
+            if (isFinderArea(r, c)) {
+                row.push(getFinderBit(r, c));
+            } else if (r === 6) {
+                // Horizontal timing pattern
+                row.push(c % 2 === 0 ? 1 : 0);
+            } else if (c === 6) {
+                // Vertical timing pattern
+                row.push(r % 2 === 0 ? 1 : 0);
             } else {
-                // Pseudo-random data blocks based on hash
-                const cellSeed = hashValue + (r * 13) + (c * 37);
-                // 45% fill density
-                row.push((cellSeed % 100) < 45 ? 1 : 0);
+                row.push(getCellBit(String(value), r, c));
             }
         }
         grid.push(row);
     }
 
-    const cellSize = size / gridSize;
+    const quietZone = 10;
+    const innerSize = size - quietZone * 2;
+    const cellSize = innerSize / gridSize;
 
     return (
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="qrcode-svg" style={{ display: "block", borderRadius: "8px" }}>
-            <rect width={size} height={size} fill="white" />
-            {grid.map((row, r) =>
-                row.map((cell, c) => {
-                    if (cell === 1) {
-                        return (
-                            <rect
-                                key={`${r}-${c}`}
-                                x={c * cellSize}
-                                y={r * cellSize}
-                                width={cellSize}
-                                height={cellSize}
-                                fill="#0b1120" // slate-900 color for high contrast
-                            />
-                        );
-                    }
-                    return null;
-                })
-            )}
-        </svg>
+        <div
+            className="d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-3 shadow-sm"
+            style={{ border: "2px solid #e2e8f0" }}
+        >
+            <svg
+                width={size}
+                height={size}
+                viewBox={`0 0 ${size} ${size}`}
+                className="qrcode-svg"
+                style={{ display: "block", borderRadius: "4px" }}
+                aria-label={`QR Code for ${value}`}
+            >
+                <rect width={size} height={size} fill="#ffffff" />
+                {grid.map((row, r) =>
+                    row.map((cell, c) => {
+                        if (cell === 1) {
+                            return (
+                                <rect
+                                    key={`${r}-${c}`}
+                                    x={quietZone + c * cellSize}
+                                    y={quietZone + r * cellSize}
+                                    width={cellSize + 0.35}
+                                    height={cellSize + 0.35}
+                                    fill="#0f172a"
+                                />
+                            );
+                        }
+                        return null;
+                    })
+                )}
+            </svg>
+        </div>
     );
 }
 
 export default QRCode;
+

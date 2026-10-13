@@ -5,17 +5,23 @@ const {
     cancelRegistration, 
     getMyRegistrations, 
     getEventRegistrations,
-    getRegistrationById
+    getRegistrationById,
+    updateRegistrationStatus,
+    assignVolunteer,
+    getStudentsList
 } = require('../controllers/registration.controller');
 const { verifyTicketAndMarkAttendance } = require('../controllers/attendance.controller');
-const { authenticateToken } = require('../middleware/auth.middleware');
+const { authenticateToken, requireOrganizer } = require('../middleware/auth.middleware');
 
 // Routes mounted at /api/registrations
 router.get('/me', authenticateToken, getMyRegistrations);
+router.get('/students', authenticateToken, requireOrganizer, getStudentsList);
+router.post('/volunteer', authenticateToken, requireOrganizer, assignVolunteer);
+router.post('/', authenticateToken, registerForEvent);
+router.patch('/:id/status', authenticateToken, requireOrganizer, updateRegistrationStatus);
+router.delete('/:eventId', authenticateToken, cancelRegistration);
 router.get('/:id', authenticateToken, getRegistrationById);
 router.patch('/:ticketId/attendance', authenticateToken, verifyTicketAndMarkAttendance);
 
-// Note: The rest will be mounted at /api/events to keep URLs strictly RESTful
-// Example: POST /api/events/:eventId/register
-
 module.exports = router;
+

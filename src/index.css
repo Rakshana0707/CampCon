@@ -1,73 +1,161 @@
-:root {
-  /* =========================================
-     CAMPUSCONNECT DESIGN SYSTEM
-     ========================================= */
-  
-  /* 1. Typography */
-  --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: 2rem;
-  --text-4xl: 2.5rem;
-  --text-5xl: 3.5rem;
+/* ==========================================================================
+   CAMPUSCONNECT — EDITORIAL JOURNAL DESIGN SYSTEM
+   Theme Tokens, Paper Textures, Serif Typography & Dual-Theme Engine
+   ========================================================================== */
 
-  /* 2. Colors - Core Palette */
-  --bg-primary: #0b1120;
-  --bg-secondary: #101b33;
-  --bg-tertiary: #1e293b;
-  
-  /* Colors - Text */
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  
-  /* Colors - Accents (Primary/Secondary) */
-  --accent-primary: #6366f1; /* Indigo */
-  --accent-primary-hover: #4f46e5;
-  --accent-cyan: #06b6d4;
-  
-  /* Colors - Semantic Statuses */
-  --status-success: #10b981; /* Emerald */
-  --status-success-hover: #059669;
-  --status-warning: #f59e0b; /* Amber */
-  --status-warning-hover: #d97706;
-  --status-danger: #f43f5e;  /* Rose */
-  --status-danger-hover: #e11d48;
-  
-  /* 3. Spacing Scale */
-  --spacing-1: 0.25rem;  /* 4px */
-  --spacing-2: 0.5rem;   /* 8px */
-  --spacing-3: 1rem;     /* 16px */
-  --spacing-4: 1.5rem;   /* 24px */
-  --spacing-5: 2rem;     /* 32px */
-  --spacing-6: 3rem;     /* 48px */
-  
-  /* 4. Borders & Radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+:root {
+  /* 1. Typography */
+  --font-serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-heading: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-handwriting: 'Caveat', cursive;
+  --font-display: 'Outfit', sans-serif;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.84rem;
+  --text-base: 0.95rem;
+  --text-lg: 1.1rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.55rem;
+  --text-3xl: 2.1rem;
+  --text-4xl: 2.85rem;
+  --text-5xl: 3.8rem;
+  --text-hero: clamp(3rem, 7vw, 5.2rem);
+
+  /* Spacing Scale */
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 1rem;
+  --spacing-4: 1.5rem;
+  --spacing-5: 2rem;
+  --spacing-6: 3rem;
+
+  /* Borders & Radius (restrained editorial borders, subtle rounding) */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
   --radius-pill: 9999px;
-  --border-light: rgba(255, 255, 255, 0.08);
-  --border-lighter: rgba(255, 255, 255, 0.2);
-  
-  /* 5. Shadows */
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 15px rgba(0, 0, 0, 0.15);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.25);
-  --shadow-float: 0 15px 35px rgba(0, 0, 0, 0.2);
-  --shadow-glow-primary: 0 4px 15px rgba(99, 102, 241, 0.25);
-  --shadow-glow-success: 0 4px 15px rgba(16, 185, 129, 0.25);
-  
-  /* 6. Surfaces (Glassmorphism) */
-  --glass-bg: rgba(16, 27, 51, 0.7);
-  --glass-card-bg: rgba(30, 41, 59, 0.45);
-  --glass-border: 1px solid var(--border-light);
+
+  /* ==========================================================================
+     LIGHT THEME (Warm Ivory, Magazine Paper, Deep Navy, Cobalt Blue Accents)
+     ========================================================================== */
+  --bg-primary: #FAF8F5;          /* Warm Ivory / Cream paper */
+  --bg-secondary: #F3EFE9;        /* Soft parchment tone */
+  --bg-tertiary: #E8E2D8;         /* Warm tactile border/neutral fill */
+  --bg-card: #FFFFFF;             /* Crisp paper card */
+  --bg-card-subtle: #F6F3ED;      /* Editorial shaded block */
+  --bg-navbar: rgba(250, 248, 245, 0.92);
+
+  --text-main: #141E30;           /* Deep navy typography */
+  --text-navy: #10192A;
+  --text-muted: #5A6679;          /* Readable editorial charcoal */
+  --text-subtle: #828E9E;         /* Light caption */
+
+  /* Cobalt & Muted Amber Accents */
+  --accent-cobalt: #1D4ED8;       /* Cobalt Blue */
+  --accent-cobalt-hover: #1E40AF;
+  --accent-primary: #1D4ED8;
+  --accent-primary-hover: #1E40AF;
+  --accent-primary-subtle: rgba(29, 78, 216, 0.08);
+
+  --accent-amber: #D97706;        /* Muted Warm Amber */
+  --accent-amber-subtle: rgba(217, 119, 6, 0.12);
+  --accent-cyan: #0284C7;
+
+  /* Editorial Fine Line Borders */
+  --border-editorial: #E2DBD0;
+  --border-light: #E8E2D8;
+  --border-focus: #1D4ED8;
+  --border-dark: #C8BFB0;
+
+  /* Status Colors */
+  --status-success: #059669;
+  --status-success-subtle: rgba(5, 150, 105, 0.1);
+  --status-warning: #D97706;
+  --status-warning-subtle: rgba(217, 119, 6, 0.1);
+  --status-danger: #DC2626;
+  --status-danger-subtle: rgba(220, 38, 38, 0.1);
+
+  /* Shadows (Subtle, paper-like drop shadows) */
+  --shadow-sm: 0 1px 3px rgba(20, 30, 48, 0.05);
+  --shadow-md: 0 4px 12px rgba(20, 30, 48, 0.07);
+  --shadow-lg: 0 12px 28px rgba(20, 30, 48, 0.09);
+  --shadow-float: 0 16px 36px rgba(20, 30, 48, 0.12);
+  --shadow-paper: 2px 4px 12px rgba(20, 30, 48, 0.06);
+
+  /* Glassmorphism shims for existing components */
+  --glass-bg: rgba(255, 255, 255, 0.88);
+  --glass-card-bg: #FFFFFF;
+  --glass-border: 1px solid var(--border-editorial);
+
+  /* Paper grain overlay opacity */
+  --grain-opacity: 0.035;
+}
+
+/* ==========================================================================
+   DARK THEME (Midnight Navy, Cream Text, Cobalt Blue, Warm Brass Accents)
+   ========================================================================== */
+html.dark,
+[data-theme="dark"] {
+  --bg-primary: #0A1120;          /* Deep midnight navy */
+  --bg-secondary: #0F172A;        /* Slightly lighter slate-navy */
+  --bg-tertiary: #1E293B;         /* Card surface */
+  --bg-card: #131E33;             /* Night editorial card */
+  --bg-card-subtle: #18243C;      /* Shaded block */
+  --bg-navbar: rgba(10, 17, 32, 0.92);
+
+  --text-main: #F4EFE6;           /* Warm cream text */
+  --text-navy: #FAF8F5;
+  --text-muted: #94A3B8;          /* Light slate */
+  --text-subtle: #64748B;
+
+  /* Cobalt Accents */
+  --accent-cobalt: #3B82F6;       /* Bright cobalt */
+  --accent-cobalt-hover: #60A5FA;
+  --accent-primary: #3B82F6;
+  --accent-primary-hover: #60A5FA;
+  --accent-primary-subtle: rgba(59, 130, 246, 0.15);
+
+  --accent-amber: #F59E0B;        /* Warm Brass */
+  --accent-amber-subtle: rgba(245, 158, 11, 0.15);
+  --accent-cyan: #38BDF8;
+
+  /* Dark Fine Line Borders */
+  --border-editorial: rgba(255, 255, 255, 0.1);
+  --border-light: rgba(255, 255, 255, 0.07);
+  --border-focus: #3B82F6;
+  --border-dark: rgba(255, 255, 255, 0.18);
+
+  /* Status Colors */
+  --status-success: #10B981;
+  --status-success-subtle: rgba(16, 185, 129, 0.15);
+  --status-warning: #F59E0B;
+  --status-warning-subtle: rgba(245, 158, 11, 0.15);
+  --status-danger: #EF4444;
+  --status-danger-subtle: rgba(239, 68, 68, 0.15);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 14px 32px rgba(0, 0, 0, 0.55);
+  --shadow-float: 0 18px 40px rgba(0, 0, 0, 0.6);
+  --shadow-paper: 2px 4px 14px rgba(0, 0, 0, 0.5);
+
+  /* Glassmorphism shims */
+  --glass-bg: rgba(15, 23, 42, 0.85);
+  --glass-card-bg: #131E33;
+  --glass-border: 1px solid var(--border-editorial);
+
+  --grain-opacity: 0.05;
+}
+
+/* ==========================================================================
+   GLOBAL BASE & PAPER GRAIN
+   ========================================================================== */
+* {
+  box-sizing: border-box;
 }
 
 body {
@@ -76,83 +164,94 @@ body {
   font-family: var(--font-body);
   background-color: var(--bg-primary);
   color: var(--text-main);
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.25s ease, color 0.25s ease;
+  position: relative;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading);
-  letter-spacing: -0.025em;
-  font-weight: 700;
+/* Paper grain texture via SVG data-uri */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
+/* Typography styles */
+h1, h2, h3, h4, .serif-heading {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--text-main);
+}
+
+h5, h6 {
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.font-serif {
+  font-family: var(--font-serif) !important;
+}
+
+.font-sans {
+  font-family: var(--font-body) !important;
+}
+
+.font-handwriting {
+  font-family: var(--font-handwriting) !important;
+}
+
+.font-display {
+  font-family: var(--font-display) !important;
+}
+
+/* Handwritten margin notes and editorial annotations */
+.editorial-annotation {
+  font-family: var(--font-handwriting);
+  font-size: 1.25rem;
+  color: var(--accent-amber);
+  transform: rotate(-3deg);
+  display: inline-block;
+}
+
+/* Fine Line Editorial Dividers */
+.editorial-rule {
+  border: 0;
+  border-top: 1px solid var(--border-editorial);
+  margin: 1.5rem 0;
+  opacity: 1;
+}
+
+/* Links */
 a {
+  color: var(--accent-cobalt);
   text-decoration: none;
-  transition: all 0.2s ease-in-out;
+  transition: color 0.18s ease;
+}
+
+a:hover {
+  color: var(--accent-cobalt-hover);
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
   background: var(--bg-primary);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-tertiary);
+  background: var(--border-dark);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-color);
-}
-/* =========================================
-   ACCESSIBILITY & MOBILE OPTIMIZATION
-   ========================================= */
-
-/* A11y Focus Rings */
-:focus-visible {
-    outline: 2px solid var(--accent-primary) !important;
-    outline-offset: 2px !important;
-    border-radius: 2px;
-}
-
-/* Enforce minimum touch target size for mobile (WCAG 2.1) */
-button, 
-a.btn, 
-.nav-link, 
-.dropdown-item, 
-input[type="checkbox"], 
-input[type="radio"] {
-    min-height: 44px;
-    min-width: 44px;
-}
-
-/* Screen reader only utility class */
-.sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    border: 0;
-}
-
-/* Skip to Main Content Link */
-.skip-link {
-    position: absolute;
-    top: -100px;
-    left: 0;
-    background: var(--accent-primary);
-    color: white;
-    padding: 12px 24px;
-    z-index: 9999;
-    font-weight: bold;
-    border-radius: 0 0 var(--radius-md) 0;
-    transition: top 0.2s ease-in-out;
-}
-
-.skip-link:focus {
-    top: 0;
+  background: var(--text-muted);
 }

@@ -252,6 +252,12 @@ function OrganizerDashboard() {
                     <FaCalendarAlt /> My Events ({displayEvents.length})
                 </button>
                 <button
+                    className={`btn btn-sm py-2 px-4 fs-7 rounded-pill text-capitalize fw-bold d-flex align-items-center gap-2 ${activeTab === 'symposiums' ? 'btn-warning text-dark' : 'btn-outline-light border-0'}`}
+                    onClick={() => setActiveTab('symposiums')}
+                >
+                    🏛️ Symposium Activities ({displayEvents.filter(e => e.eventFormat === 'SYMPOSIUM').length})
+                </button>
+                <button
                     className={`btn btn-sm py-2 px-4 fs-7 rounded-pill text-capitalize fw-bold d-flex align-items-center gap-2 ${activeTab === 'approvals' ? 'btn-warning text-dark' : 'btn-outline-light border-0'}`}
                     onClick={() => setActiveTab('approvals')}
                 >
@@ -299,6 +305,27 @@ function OrganizerDashboard() {
                 </div>
             )}
 
+            {activeTab === "symposiums" && (
+                <div className="mt-3">
+                    {displayEvents.filter(e => e.eventFormat === 'SYMPOSIUM').length === 0 ? (
+                        <div className="empty-state mt-3">
+                            <FaBriefcase />
+                            <h5>No symposiums managed</h5>
+                            <p>You have not organized any symposiums yet. Select 'Dedicated Symposium' in the Create Event form.</p>
+                            <Link to="/create-event" className="btn btn-warning text-dark mt-2 px-4 py-2 fw-bold">
+                                Create Symposium
+                            </Link>
+                        </div>
+                    ) : (
+                        <div className="d-flex flex-column gap-4">
+                            {displayEvents.filter(e => e.eventFormat === 'SYMPOSIUM').map(symp => (
+                                <OrganizerSymposiumCard key={symp.id} symposium={symp} />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
             {activeTab === "approvals" && (
                 <div className="mt-3">
                     {pendingRequests.length === 0 ? (
@@ -323,13 +350,16 @@ function OrganizerDashboard() {
                                         {pendingRequests.map(req => {
                                             const student = getStudentDetails(req.studentId);
                                             const event = getEventDetails(req.eventId);
-                                            if (!student || !event) return null;
+                                            if (!event) return null;
+                                            const studentName = student?.name || req.studentName || "Student";
+                                            const studentRoll = student?.rollNumber || req.studentRollNumber || "23MX101";
+                                            const studentDept = student?.department || req.studentDepartment || "Student";
                                             
                                             return (
                                                 <tr key={req.id}>
                                                     <td className="ps-4 py-3 border-secondary border-opacity-25">
-                                                        <div className="fw-bold text-white fs-7">{student.name}</div>
-                                                        <div className="text-muted fs-8">{student.rollNumber || "23MX101"} • {student.department}</div>
+                                                        <div className="fw-bold text-white fs-7">{studentName}</div>
+                                                        <div className="text-muted fs-8">{studentRoll} • {studentDept}</div>
                                                     </td>
                                                     <td className="py-3 border-secondary border-opacity-25">
                                                         <span className="text-white fs-7">{event.title}</span>
@@ -438,7 +468,10 @@ function OrganizerDashboard() {
                             {assignedVolunteersList.map(vol => {
                                 const student = getStudentDetails(vol.studentId);
                                 const event = getEventDetails(vol.eventId);
-                                if (!student || !event) return null;
+                                if (!event) return null;
+                                const studentName = student?.name || vol.studentName || "Student";
+                                const studentRoll = student?.rollNumber || vol.studentRollNumber || "23MX101";
+                                const studentDept = student?.department || vol.studentDepartment || "Student";
 
                                 return (
                                     <div key={vol.id} className="col-md-6">
@@ -447,8 +480,8 @@ function OrganizerDashboard() {
                                                 <FaHandsHelping size={24} />
                                             </div>
                                             <div>
-                                                <h6 className="text-white fw-bold mb-1">{student.name}</h6>
-                                                <p className="text-muted fs-8 mb-1">{student.rollNumber || "23MX101"} • {student.department}</p>
+                                                <h6 className="text-white fw-bold mb-1">{studentName}</h6>
+                                                <p className="text-muted fs-8 mb-1">{studentRoll} • {studentDept}</p>
                                                 <span className="badge bg-primary bg-opacity-25 text-light fs-9 border border-primary border-opacity-50">
                                                     Event: {event.title}
                                                 </span>
@@ -500,6 +533,281 @@ function OrganizerDashboard() {
             )}
 
         </DashboardLayout>
+    );
+}
+
+function OrganizerSymposiumCard({ symposium }) {
+    const { addSymposiumActivity, removeSymposiumActivity } = useContext(AppContext);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [newActivity, setNewActivity] = useState({
+        name: "",
+        category: "Technical",
+        description: "",
+        dayNumber: 1,
+        startTime: symposium.rawDate ? new Date(symposium.rawDate).toISOString().slice(0, 16) : "",
+        endTime: symposium.rawEndDate ? new Date(symposium.rawEndDate).toISOString().slice(0, 16) : "",
+        venue: symposium.venue || "",
+        maxParticipants: 50,
+        requiresSeparateRegistration: true,
+        requiresOverallRegistration: true,
+        fee: 0
+    });
+    const [submitting, setSubmitting] = useState(false);
+
+    const activities = symposium.activities || [];
+    const totalDays = Math.max(1, symposium.numberOfDays || 1);
+
+    const handleCreateActivity = async (e) => {
+        e.preventDefault();
+        setSubmitting(true);
+        const res = await addSymposiumActivity(symposium.id, newActivity);
+        setSubmitting(false);
+        if (res) {
+            setShowAddModal(false);
+            setNewActivity({
+                name: "",
+                category: "Technical",
+                description: "",
+                dayNumber: 1,
+                startTime: symposium.rawDate ? new Date(symposium.rawDate).toISOString().slice(0, 16) : "",
+                endTime: symposium.rawEndDate ? new Date(symposium.rawEndDate).toISOString().slice(0, 16) : "",
+                venue: symposium.venue || "",
+                maxParticipants: 50,
+                requiresSeparateRegistration: true,
+                requiresOverallRegistration: true,
+                fee: 0
+            });
+        }
+    };
+
+    return (
+        <div className="glass-panel p-4 border border-warning border-opacity-30 rounded-4">
+            <div className="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+                <div>
+                    <span className="badge bg-warning text-dark fw-bold px-2 py-1 mb-1">🏛️ DEDICATED SYMPOSIUM</span>
+                    <h4 className="text-white fw-bold mb-1">{symposium.title}</h4>
+                    <span className="text-muted fs-8">
+                        {symposium.date} to {symposium.endDate || symposium.date} • {symposium.venue} • Capacity: {symposium.seats} seats
+                    </span>
+                </div>
+                <div className="d-flex gap-2">
+                    <button 
+                        className="btn btn-warning text-dark btn-sm fw-bold d-flex align-items-center gap-1"
+                        onClick={() => setShowAddModal(true)}
+                    >
+                        <FaPlus /> Add Activity
+                    </button>
+                    <Link to={`/events/${symposium.id}`} className="btn btn-outline-light btn-sm">
+                        Public View →
+                    </Link>
+                </div>
+            </div>
+
+            {/* Scheduled Activities Listing */}
+            <div className="mt-3">
+                <h6 className="text-white fw-bold mb-2 fs-7">Child Activities ({activities.length}):</h6>
+                {activities.length === 0 ? (
+                    <div className="p-3 rounded-3 bg-dark bg-opacity-40 text-muted fs-8 text-center border border-secondary border-opacity-25">
+                        No child activities added yet. Click "+ Add Activity" to schedule events, hackathons, and sessions.
+                    </div>
+                ) : (
+                    <div className="table-responsive">
+                        <table className="table table-dark table-sm align-middle mb-0 fs-8">
+                            <thead>
+                                <tr className="text-muted text-uppercase">
+                                    <th>Day</th>
+                                    <th>Activity Name</th>
+                                    <th>Category</th>
+                                    <th>Time</th>
+                                    <th>Venue</th>
+                                    <th>Capacity</th>
+                                    <th>Reg Prerequisite</th>
+                                    <th className="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {activities.map((act) => (
+                                    <tr key={act.id}>
+                                        <td><span className="badge bg-secondary">Day {act.dayNumber}</span></td>
+                                        <td className="fw-bold text-white">{act.name}</td>
+                                        <td><span className="badge bg-primary fs-9">{act.category}</span></td>
+                                        <td>{new Date(act.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(act.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                                        <td>{act.venue}</td>
+                                        <td>{act.availableSeats} / {act.maxParticipants} left</td>
+                                        <td>
+                                            {act.requiresOverallRegistration ? (
+                                                <span className="badge bg-warning text-dark fs-9">Overall Required</span>
+                                            ) : (
+                                                <span className="badge bg-secondary fs-9">Open</span>
+                                            )}
+                                        </td>
+                                        <td className="text-end">
+                                            <button 
+                                                className="btn btn-outline-danger btn-sm py-0 px-2 fs-9"
+                                                onClick={() => {
+                                                    if (window.confirm(`Are you sure you want to cancel/remove activity "${act.name}"?`)) {
+                                                        removeSymposiumActivity(act.id);
+                                                    }
+                                                }}
+                                            >
+                                                Remove
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            {/* Modal for adding activity */}
+            {showAddModal && (
+                <div className="modal fade show d-block" tabIndex="-1" style={{ background: "rgba(0,0,0,0.8)", zIndex: 1060 }}>
+                    <div className="modal-dialog modal-lg modal-dialog-centered">
+                        <div className="modal-content bg-dark border border-secondary text-white">
+                            <form onSubmit={handleCreateActivity}>
+                                <div className="modal-header border-secondary">
+                                    <h5 className="modal-title fw-bold">Add Activity to {symposium.title}</h5>
+                                    <button type="button" className="btn-close btn-close-white" onClick={() => setShowAddModal(false)}></button>
+                                </div>
+                                <div className="modal-body">
+                                    <div className="row g-3">
+                                        <div className="col-md-8">
+                                            <label className="form-label fs-8 fw-bold">Activity Name *</label>
+                                            <input 
+                                                className="form-control form-control-sm"
+                                                value={newActivity.name}
+                                                onChange={e => setNewActivity({ ...newActivity, name: e.target.value })}
+                                                placeholder="e.g. Algorithmic Coding Sprint"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="col-md-4">
+                                            <label className="form-label fs-8 fw-bold">Category</label>
+                                            <select 
+                                                className="form-select form-select-sm"
+                                                value={newActivity.category}
+                                                onChange={e => setNewActivity({ ...newActivity, category: e.target.value })}
+                                            >
+                                                <option value="Technical">Technical</option>
+                                                <option value="Non-Technical">Non-Technical</option>
+                                                <option value="Workshop">Workshop</option>
+                                                <option value="Gaming">Gaming</option>
+                                                <option value="General">General</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="col-md-4">
+                                            <label className="form-label fs-8 fw-bold">Day Number *</label>
+                                            <select 
+                                                className="form-select form-select-sm"
+                                                value={newActivity.dayNumber}
+                                                onChange={e => setNewActivity({ ...newActivity, dayNumber: parseInt(e.target.value, 10) })}
+                                            >
+                                                {Array.from({ length: totalDays }, (_, i) => i + 1).map(d => (
+                                                    <option key={d} value={d}>Day {d}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="col-md-4">
+                                            <label className="form-label fs-8 fw-bold">Start Time *</label>
+                                            <input 
+                                                type="datetime-local" 
+                                                className="form-control form-control-sm"
+                                                value={newActivity.startTime}
+                                                onChange={e => setNewActivity({ ...newActivity, startTime: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="col-md-4">
+                                            <label className="form-label fs-8 fw-bold">End Time *</label>
+                                            <input 
+                                                type="datetime-local" 
+                                                className="form-control form-control-sm"
+                                                value={newActivity.endTime}
+                                                onChange={e => setNewActivity({ ...newActivity, endTime: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="col-md-6">
+                                            <label className="form-label fs-8 fw-bold">Venue *</label>
+                                            <input 
+                                                className="form-control form-control-sm"
+                                                value={newActivity.venue}
+                                                onChange={e => setNewActivity({ ...newActivity, venue: e.target.value })}
+                                                placeholder="e.g. Lab 204"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="col-md-6">
+                                            <label className="form-label fs-8 fw-bold">Max Participants *</label>
+                                            <input 
+                                                type="number"
+                                                className="form-control form-control-sm"
+                                                value={newActivity.maxParticipants}
+                                                onChange={e => setNewActivity({ ...newActivity, maxParticipants: parseInt(e.target.value, 10) })}
+                                                min="1"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="col-12">
+                                            <label className="form-label fs-8 fw-bold">Activity Description</label>
+                                            <textarea 
+                                                className="form-control form-control-sm"
+                                                rows="2"
+                                                value={newActivity.description}
+                                                onChange={e => setNewActivity({ ...newActivity, description: e.target.value })}
+                                                placeholder="Overview of this specific competition, rules, or session..."
+                                            />
+                                        </div>
+
+                                        <div className="col-md-6">
+                                            <div className="form-check">
+                                                <input 
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                    id="requiresOverallRegistrationCheck"
+                                                    checked={newActivity.requiresOverallRegistration}
+                                                    onChange={e => setNewActivity({ ...newActivity, requiresOverallRegistration: e.target.checked })}
+                                                />
+                                                <label className="form-check-label fs-8" htmlFor="requiresOverallRegistrationCheck">
+                                                    Require Overall Symposium Registration first
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-6">
+                                            <div className="form-check">
+                                                <input 
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                    id="requiresSeparateRegistrationCheck"
+                                                    checked={newActivity.requiresSeparateRegistration}
+                                                    onChange={e => setNewActivity({ ...newActivity, requiresSeparateRegistration: e.target.checked })}
+                                                />
+                                                <label className="form-check-label fs-8" htmlFor="requiresSeparateRegistrationCheck">
+                                                    Require Separate Activity Registration
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="modal-footer border-secondary">
+                                    <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => setShowAddModal(false)}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="btn btn-warning text-dark btn-sm fw-bold" disabled={submitting}>
+                                        {submitting ? "Adding..." : "Add Activity"}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 }
 

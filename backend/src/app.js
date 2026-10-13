@@ -11,6 +11,8 @@ const notificationRoutes = require('./routes/notification.routes');
 const certificateRoutes = require('./routes/certificate.routes');
 const adminRoutes = require('./routes/admin.routes');
 const organizerRoutes = require('./routes/organizer.routes');
+const symposiumRoutes = require('./routes/symposium.routes');
+const institutionRoutes = require('./routes/institution.routes');
 
 const app = express();
 
@@ -32,11 +34,13 @@ app.use(express.json()); // Parse incoming JSON payloads
 app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api', symposiumRoutes);
 app.use('/api/registrations', registrationRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/organizers', organizerRoutes);
+app.use('/api/institutions', institutionRoutes);
 
 // 3. Centralized Error Handling
 app.use(errorHandler);

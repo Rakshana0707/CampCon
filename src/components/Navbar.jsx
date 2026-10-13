@@ -1,17 +1,40 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useContext, useState } from "react";
 import { AppContext } from "../context/AppContext";
-import { FaCalendarAlt, FaUserCircle, FaSignOutAlt, FaPlus, FaColumns, FaBars } from "react-icons/fa";
+import { useTheme } from "../context/ThemeContext";
+import { 
+    FaSearch, 
+    FaSun, 
+    FaMoon, 
+    FaUserCircle, 
+    FaSignOutAlt, 
+    FaPlus, 
+    FaColumns, 
+    FaBars,
+    FaCompass,
+    FaTicketAlt
+} from "react-icons/fa";
 
 function Navbar() {
     const { currentUser, logout } = useContext(AppContext);
+    const { theme, toggleTheme, isDark } = useTheme();
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [navSearch, setNavSearch] = useState("");
 
     const handleLogout = () => {
         logout();
         setIsMenuOpen(false);
         navigate("/");
+    };
+
+    const handleSearchSubmit = (e) => {
+        e.preventDefault();
+        if (navSearch.trim()) {
+            navigate("/events", { state: { initialSearch: navSearch.trim() } });
+            setNavSearch("");
+            setIsMenuOpen(false);
+        }
     };
 
     const getDashboardPath = () => {
@@ -23,37 +46,43 @@ function Navbar() {
     };
 
     return (
-        <nav className="navbar navbar-expand-lg navbar-dark sticky-top" style={{ background: "var(--glass-bg)", backdropFilter: "blur(16px)", borderBottom: "var(--glass-border)" }}>
-            <div className="container py-1">
-                {/* Logo */}
-                <Link className="navbar-brand fw-bold fs-4 d-flex align-items-center" to="/" onClick={() => setIsMenuOpen(false)}>
-                    <FaCalendarAlt className="me-2" style={{ color: "var(--accent-primary)" }} />
-                    <span style={{ fontFamily: "var(--font-heading)" }}>Campus<span style={{ color: "var(--accent-primary)" }}>Connect</span></span>
+        <nav className="navbar navbar-expand-lg sticky-top editorial-navbar py-2">
+            <div className="container">
+                {/* Logo & Brand */}
+                <Link className="editorial-brand text-decoration-none" to="/" onClick={() => setIsMenuOpen(false)}>
+                    <span>CampusConnect</span>
+                    <span className="editorial-brand-dot" aria-hidden="true"></span>
                 </Link>
 
-                {/* Mobile Toggle */}
-                <button
-                    className="navbar-toggler border-0 shadow-none px-2"
-                    type="button"
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    data-bs-toggle="collapse"
-                    data-bs-target="#navbarNav"
-                    aria-expanded={isMenuOpen}
-                    aria-label="Toggle navigation"
-                >
-                    <FaBars className="text-light fs-4" />
-                </button>
+                {/* Mobile Controls: Theme toggle + Hamburger */}
+                <div className="d-flex align-items-center gap-2 d-lg-none">
+                    <button
+                        className="theme-toggle-btn"
+                        onClick={toggleTheme}
+                        aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+                        title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+                    >
+                        {isDark ? <FaSun className="text-warning" size={14} /> : <FaMoon size={14} />}
+                    </button>
 
-                {/* Navbar Items */}
-                <div className={`collapse navbar-collapse ${isMenuOpen ? 'show' : ''}`} id="navbarNav">
-                    <ul className="navbar-nav mx-auto gap-1">
+                    <button
+                        className="btn btn-sm btn-editorial-secondary p-2"
+                        type="button"
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                        aria-label="Toggle navigation"
+                    >
+                        <FaBars size={16} />
+                    </button>
+                </div>
+
+                {/* Navbar Content */}
+                <div className={`collapse navbar-collapse ${isMenuOpen ? 'show' : ''}`} id="editorialNavContent">
+                    {/* Editorial Nav Links */}
+                    <ul className="navbar-nav mx-auto align-items-lg-center gap-1 my-3 my-lg-0">
                         <li className="nav-item">
                             <NavLink
                                 to="/"
-                                className={({ isActive }) =>
-                                    `nav-link rounded px-3 py-2 ${isActive ? "active fw-bold" : "text-light"}`
-                                }
-                                style={({ isActive }) => isActive ? { backgroundColor: "rgba(99, 102, 241, 0.15)", color: "var(--accent-primary)" } : {}}
+                                className={({ isActive }) => `editorial-nav-link ${isActive ? "active" : ""}`}
                                 onClick={() => setIsMenuOpen(false)}
                             >
                                 Home
@@ -63,101 +92,162 @@ function Navbar() {
                         <li className="nav-item">
                             <NavLink
                                 to="/events"
-                                className={({ isActive }) =>
-                                    `nav-link rounded px-3 py-2 ${isActive ? "active fw-bold" : "text-light"}`
-                                }
-                                style={({ isActive }) => isActive ? { backgroundColor: "rgba(99, 102, 241, 0.15)", color: "var(--accent-primary)" } : {}}
+                                className={({ isActive }) => `editorial-nav-link ${isActive ? "active" : ""}`}
                                 onClick={() => setIsMenuOpen(false)}
                             >
-                                Discover Events
+                                Discover
+                            </NavLink>
+                        </li>
+
+                        <li className="nav-item">
+                            <NavLink
+                                to="/events"
+                                state={{ selectedEventFormat: "SYMPOSIUM" }}
+                                className="editorial-nav-link"
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                Symposiums
                             </NavLink>
                         </li>
 
                         <li className="nav-item">
                             <NavLink
                                 to="/organizers"
-                                className={({ isActive }) =>
-                                    `nav-link rounded px-3 py-2 ${isActive ? "active fw-bold" : "text-light"}`
-                                }
-                                style={({ isActive }) => isActive ? { backgroundColor: "rgba(99, 102, 241, 0.15)", color: "var(--accent-primary)" } : {}}
+                                className={({ isActive }) => `editorial-nav-link ${isActive ? "active" : ""}`}
                                 onClick={() => setIsMenuOpen(false)}
                             >
-                                Official Directory
+                                Organizations
                             </NavLink>
                         </li>
+
+                        {currentUser?.role?.toLowerCase() === "student" && (
+                            <li className="nav-item">
+                                <NavLink
+                                    to="/student?tab=tickets"
+                                    className="editorial-nav-link d-flex align-items-center gap-1"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    <FaTicketAlt size={12} /> My Tickets
+                                </NavLink>
+                            </li>
+                        )}
 
                         {currentUser && (
                             <li className="nav-item d-lg-none">
                                 <NavLink
                                     to={getDashboardPath()}
-                                    className={({ isActive }) =>
-                                        `nav-link rounded px-3 py-2 ${isActive ? "active fw-bold" : "text-light"}`
-                                    }
-                                    style={({ isActive }) => isActive ? { backgroundColor: "rgba(99, 102, 241, 0.15)", color: "var(--accent-primary)" } : {}}
+                                    className="editorial-nav-link"
                                     onClick={() => setIsMenuOpen(false)}
                                 >
-                                    Dashboard Home
+                                    Dashboard
                                 </NavLink>
                             </li>
                         )}
                     </ul>
 
-                    <div className="d-flex flex-column flex-lg-row align-items-lg-center gap-3 mt-3 mt-lg-0 pb-3 pb-lg-0">
+                    {/* Right Side: Search, Theme Toggle & Auth Controls */}
+                    <div className="d-flex flex-column flex-lg-row align-items-lg-center gap-2 pt-2 pt-lg-0 border-top border-lg-0" style={{ borderColor: "var(--border-editorial)" }}>
+                        {/* Compact Search Box */}
+                        <form onSubmit={handleSearchSubmit} className="nav-search-wrapper my-2 my-lg-0">
+                            <FaSearch 
+                                size={12} 
+                                style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} 
+                            />
+                            <input
+                                type="text"
+                                className="nav-search-input w-100"
+                                placeholder="Search stories, events..."
+                                value={navSearch}
+                                onChange={(e) => setNavSearch(e.target.value)}
+                            />
+                        </form>
+
+                        {/* Desktop Theme Toggle */}
+                        <button
+                            className="theme-toggle-btn d-none d-lg-inline-flex"
+                            onClick={toggleTheme}
+                            aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+                            title={`Switch to ${isDark ? 'light' : 'dark'} mode (current: ${theme})`}
+                        >
+                            {isDark ? <FaSun className="text-warning" size={14} /> : <FaMoon size={14} />}
+                        </button>
+
                         {currentUser ? (
-                            <>
-                                {currentUser.role === "Organizer" && (
-                                    <Link to="/create-event" className="btn btn-primary btn-sm d-flex align-items-center justify-content-center gap-1 py-2" onClick={() => setIsMenuOpen(false)}>
-                                        <FaPlus size={12} /> Create Event
+                            <div className="d-flex align-items-center gap-2">
+                                {currentUser.role?.toLowerCase() === "organizer" && (
+                                    <Link 
+                                        to="/create-event" 
+                                        className="btn btn-editorial-primary btn-sm d-flex align-items-center gap-1 py-1 px-3"
+                                        onClick={() => setIsMenuOpen(false)}
+                                    >
+                                        <FaPlus size={10} /> Publish
                                     </Link>
                                 )}
 
                                 <div className="dropdown">
                                     <button
-                                        className="btn dropdown-toggle d-flex align-items-center gap-2 py-2 px-3 w-100 justify-content-between"
+                                        className="btn btn-editorial-secondary btn-sm dropdown-toggle d-flex align-items-center gap-2 py-1 px-2"
                                         type="button"
-                                        id="userDropdown"
+                                        id="userEditorialDropdown"
                                         data-bs-toggle="dropdown"
                                         aria-expanded="false"
-                                        style={{ background: "rgba(30, 41, 59, 0.6)", border: "var(--glass-border)", borderRadius: "var(--radius-pill)", color: "var(--text-main)" }}
                                     >
-                                        <div className="d-flex align-items-center gap-2">
-                                            <FaUserCircle className="fs-5" style={{ color: "var(--accent-primary)" }} />
-                                            <span className="fw-medium">{currentUser.name}</span>
-                                        </div>
+                                        <FaUserCircle size={16} style={{ color: "var(--accent-cobalt)" }} />
+                                        <span className="fw-semibold fs-8">{currentUser.name}</span>
                                     </button>
-                                    <ul className="dropdown-menu dropdown-menu-end dropdown-menu-dark p-2 border-secondary shadow-lg mt-2 rounded-3" aria-labelledby="userDropdown" style={{ minWidth: "220px", background: "var(--glass-bg)", backdropFilter: "blur(16px)" }}>
-                                        <li>
-                                            <div className="dropdown-header text-muted pb-0">
-                                                <small className="text-uppercase tracking-wider fs-9">Signed in as</small>
-                                                <div className="text-white fw-bold text-truncate mt-1" title={currentUser.email}>{currentUser.email}</div>
-                                                <span className="badge bg-primary bg-opacity-25 text-primary mt-2">{currentUser.role}</span>
-                                            </div>
+                                    <ul className="dropdown-menu dropdown-menu-end shadow-sm p-2 border" style={{ background: "var(--bg-card)", borderColor: "var(--border-editorial)", minWidth: "210px" }} aria-labelledby="userEditorialDropdown">
+                                        <li className="px-2 py-1">
+                                            <small className="text-muted text-uppercase tracking-wider fs-9 d-block">Account Role</small>
+                                            <span className="badge bg-primary bg-opacity-10 text-primary fw-bold mt-1">{currentUser.role}</span>
                                         </li>
-                                        <li><hr className="dropdown-divider border-secondary my-2" /></li>
+                                        <li><hr className="dropdown-divider my-2" style={{ borderColor: "var(--border-editorial)" }} /></li>
                                         <li>
-                                            <Link className="dropdown-item d-flex align-items-center gap-2 py-2 rounded" to={getDashboardPath()} onClick={() => setIsMenuOpen(false)}>
-                                                <FaColumns className="text-muted" /> Dashboard Portal
+                                            <Link 
+                                                className="dropdown-item rounded d-flex align-items-center gap-2 fs-8 py-2" 
+                                                to={getDashboardPath()} 
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                <FaColumns size={12} /> Dashboard Portal
                                             </Link>
                                         </li>
-                                        <li><hr className="dropdown-divider border-secondary my-2" /></li>
+                                        {currentUser.role?.toLowerCase() === "student" && (
+                                            <li>
+                                                <Link 
+                                                    className="dropdown-item rounded d-flex align-items-center gap-2 fs-8 py-2" 
+                                                    to="/student?tab=tickets" 
+                                                    onClick={() => setIsMenuOpen(false)}
+                                                >
+                                                    <FaTicketAlt size={12} /> My Event Tickets
+                                                </Link>
+                                            </li>
+                                        )}
+                                        <li><hr className="dropdown-divider my-2" style={{ borderColor: "var(--border-editorial)" }} /></li>
                                         <li>
                                             <button
-                                                className="dropdown-item text-danger d-flex align-items-center gap-2 py-2 rounded"
+                                                className="dropdown-item text-danger rounded d-flex align-items-center gap-2 fs-8 py-2"
                                                 onClick={handleLogout}
                                             >
-                                                <FaSignOutAlt /> Sign Out
+                                                <FaSignOutAlt size={12} /> Sign Out
                                             </button>
                                         </li>
                                     </ul>
                                 </div>
-                            </>
+                            </div>
                         ) : (
                             <div className="d-flex gap-2">
-                                <Link to="/login" className="btn btn-outline-light px-4 w-100" onClick={() => setIsMenuOpen(false)}>
-                                    Login
+                                <Link 
+                                    to="/login" 
+                                    className="btn btn-editorial-secondary btn-sm py-1 px-3" 
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    Log In
                                 </Link>
-                                <Link to="/register" className="btn btn-primary px-4 w-100" onClick={() => setIsMenuOpen(false)}>
-                                    Register
+                                <Link 
+                                    to="/register" 
+                                    className="btn btn-editorial-primary btn-sm py-1 px-3" 
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    Join
                                 </Link>
                             </div>
                         )}

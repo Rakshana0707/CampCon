@@ -14,8 +14,10 @@ function Events() {
     const [category, setCategory] = useState("All");
     const [department, setDepartment] = useState("All");
     const [eventTypeFilter, setEventTypeFilter] = useState("All"); // All, INTRA_COLLEGE, INTER_COLLEGE
+    const [eventFormatFilter, setEventFormatFilter] = useState("All"); // All, REGULAR, SYMPOSIUM
     const [organizerEntityFilter, setOrganizerEntityFilter] = useState("All");
-    const [dateFilter, setDateFilter] = useState("All"); // All, Today, Upcoming, Completed
+    const [dateFilter, setDateFilter] = useState("All"); // All, Upcoming, Ongoing, Today, Completed
+    const [regStatusFilter, setRegStatusFilter] = useState("All"); // All, open, upcoming
     const [sortBy, setSortBy] = useState("date"); // date, seats, alphabet
     const [officialOrganizers, setOfficialOrganizers] = useState([]);
 
@@ -42,6 +44,12 @@ function Events() {
             }
             if (location.state.selectedEventType) {
                 setEventTypeFilter(location.state.selectedEventType);
+            }
+            if (location.state.selectedEventFormat) {
+                setEventFormatFilter(location.state.selectedEventFormat);
+            }
+            if (location.state.initialSearch) {
+                setSearch(location.state.initialSearch);
             }
             if (location.state.selectedOrganizer) {
                 setOrganizerEntityFilter(location.state.selectedOrganizer);
@@ -77,6 +85,9 @@ function Events() {
         const matchesEventType =
             eventTypeFilter === "All" || event.eventType === eventTypeFilter;
 
+        const matchesEventFormat =
+            eventFormatFilter === "All" || (event.eventFormat || "REGULAR") === eventFormatFilter;
+
         const matchesDepartment =
             department === "All" || 
             event.department === department || 
@@ -88,21 +99,41 @@ function Events() {
             event.department === organizerEntityFilter ||
             event.organizerEntity?.name === organizerEntityFilter;
 
-        let matchesDate = true;
-        const eventDate = new Date(event.date);
-        eventDate.setHours(0, 0, 0, 0);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const now = new Date();
+        const startDate = new Date(event.rawDate || event.date);
+        const endDate = new Date(event.rawEndDate || event.endDate || event.date);
+        const isOngoing = startDate <= now && now <= endDate;
+        const isEnded = now > endDate;
+        const isUpcoming = startDate > now;
 
-        if (dateFilter === "Today") {
-            matchesDate = eventDate.getTime() === today.getTime();
-        } else if (dateFilter === "Upcoming") {
-            matchesDate = eventDate >= today;
+        let matchesDate = true;
+        if (dateFilter === "Upcoming") {
+            matchesDate = isUpcoming;
+        } else if (dateFilter === "Ongoing") {
+            matchesDate = isOngoing;
         } else if (dateFilter === "Completed") {
-            matchesDate = eventDate < today;
+            matchesDate = isEnded;
+        } else if (dateFilter === "Today") {
+            const eventDay = new Date(event.date);
+            eventDay.setHours(0, 0, 0, 0);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            matchesDate = eventDay.getTime() === today.getTime();
         }
 
-        return matchesSearch && matchesCategory && matchesEventType && matchesDepartment && matchesOrganizerEntity && matchesDate;
+        let matchesRegStatus = true;
+        const regOpens = event.rawInternalRegOpensAt || event.internalRegOpensAt;
+        const isRegUpcoming = regOpens && now < new Date(regOpens);
+        const isDeadlinePassed = event.deadline && now > new Date(event.rawDeadline || event.deadline);
+        const isRegOpen = !isRegUpcoming && !isDeadlinePassed && !isEnded && (event.seats > 0);
+
+        if (regStatusFilter === "open") {
+            matchesRegStatus = isRegOpen;
+        } else if (regStatusFilter === "upcoming") {
+            matchesRegStatus = isRegUpcoming;
+        }
+
+        return matchesSearch && matchesCategory && matchesEventType && matchesEventFormat && matchesDepartment && matchesOrganizerEntity && matchesDate && matchesRegStatus;
     });
 
     // Sorting logic
@@ -122,43 +153,50 @@ function Events() {
         setEventTypeFilter("All");
         setOrganizerEntityFilter("All");
         setDateFilter("All");
+        setRegStatusFilter("All");
         setSearch("");
         setSortBy("date");
     };
 
     return (
         <div className="container py-5" style={{ minHeight: "80vh" }}>
-            <div className="text-center mb-4">
-                <span className="text-primary fw-bold text-uppercase tracking-wider fs-7">
-                    Discover Campus & Inter-College Events
+            <div className="text-center mb-5">
+                <span className="editorial-meta-tag">
+                    CampusConnect Archive & Catalogue
                 </span>
-                <h1 className="fw-extrabold text-white mt-1" style={{ fontSize: "2.6rem" }}>
-                    Campus Events Explorer
+                <h1 className="serif-heading mt-1" style={{ fontSize: "2.8rem" }}>
+                    Discover Events & Symposiums
                 </h1>
-                <p className="text-muted max-width-600 mx-auto">
-                    Explore intra-college championships and inter-college symposiums from official academic departments and student clubs.
+                <p className="text-muted max-width-600 mx-auto fs-7">
+                    Explore curated intra-college championships, technical symposiums, and cultural gatherings organized by verified college entities.
                 </p>
             </div>
 
-            {/* Event Type Filter Pills Header */}
+            {/* Event Type & Format Filter Pills Header */}
             <div className="d-flex justify-content-center gap-2 mb-4 flex-wrap">
                 <button
-                    className={`btn px-4 py-2 rounded-pill fw-semibold ${eventTypeFilter === "All" ? "btn-primary" : "btn-outline-secondary text-light"}`}
-                    onClick={() => setEventTypeFilter("All")}
+                    className={`btn px-4 py-2 rounded-pill fw-semibold fs-8 ${eventTypeFilter === "All" && eventFormatFilter === "All" ? "btn-editorial-primary" : "btn-editorial-secondary"}`}
+                    onClick={() => { setEventTypeFilter("All"); setEventFormatFilter("All"); }}
                 >
                     All Events
                 </button>
                 <button
-                    className={`btn px-4 py-2 rounded-pill fw-semibold ${eventTypeFilter === "INTRA_COLLEGE" ? "btn-primary" : "btn-outline-secondary text-light"}`}
+                    className={`btn px-4 py-2 rounded-pill fw-semibold fs-8 ${eventTypeFilter === "INTRA_COLLEGE" ? "btn-editorial-primary" : "btn-editorial-secondary"}`}
                     onClick={() => setEventTypeFilter("INTRA_COLLEGE")}
                 >
-                    🏛️ Intra-College Events
+                    🏛️ Intra-College
                 </button>
                 <button
-                    className={`btn px-4 py-2 rounded-pill fw-semibold ${eventTypeFilter === "INTER_COLLEGE" ? "btn-info text-dark" : "btn-outline-secondary text-light"}`}
+                    className={`btn px-4 py-2 rounded-pill fw-semibold fs-8 ${eventTypeFilter === "INTER_COLLEGE" ? "btn-editorial-primary" : "btn-editorial-secondary"}`}
                     onClick={() => setEventTypeFilter("INTER_COLLEGE")}
                 >
-                    🌐 Inter-College Events
+                    🌐 Inter-College
+                </button>
+                <button
+                    className={`btn px-4 py-2 rounded-pill fw-semibold fs-8 ${eventFormatFilter === "SYMPOSIUM" ? "btn-editorial-primary" : "btn-editorial-secondary"}`}
+                    onClick={() => setEventFormatFilter(eventFormatFilter === "SYMPOSIUM" ? "All" : "SYMPOSIUM")}
+                >
+                    ★ Dedicated Symposiums
                 </button>
             </div>
 
@@ -174,11 +212,12 @@ function Events() {
                 {/* Department Filter */}
                 <div className="col-lg-3 col-md-3">
                     <div className="input-group">
-                        <span className="input-group-text bg-dark border-secondary text-muted fs-8 fw-semibold">
+                        <span className="input-group-text border-end-0 fs-8 fw-semibold" style={{ backgroundColor: "var(--bg-secondary)", borderColor: "var(--border-editorial)", color: "var(--text-muted)" }}>
                             <FaUniversity className="me-1" /> DEPT
                         </span>
                         <select
-                            className="form-select fs-7"
+                            className="form-select fs-8 border-start-0"
+                            style={{ backgroundColor: "var(--bg-secondary)", borderColor: "var(--border-editorial)", color: "var(--text-main)" }}
                             value={department}
                             onChange={(e) => setDepartment(e.target.value)}
                         >
@@ -195,11 +234,12 @@ function Events() {
                 {/* Organizing Club Filter */}
                 <div className="col-lg-3 col-md-3">
                     <div className="input-group">
-                        <span className="input-group-text bg-dark border-secondary text-muted fs-8 fw-semibold">
+                        <span className="input-group-text border-end-0 fs-8 fw-semibold" style={{ backgroundColor: "var(--bg-secondary)", borderColor: "var(--border-editorial)", color: "var(--text-muted)" }}>
                             <FaBuilding className="me-1" /> CLUB
                         </span>
                         <select
-                            className="form-select fs-7"
+                            className="form-select fs-8 border-start-0"
+                            style={{ backgroundColor: "var(--bg-secondary)", borderColor: "var(--border-editorial)", color: "var(--text-main)" }}
                             value={organizerEntityFilter}
                             onChange={(e) => setOrganizerEntityFilter(e.target.value)}
                         >
@@ -246,7 +286,7 @@ function Events() {
                     <div className="d-flex align-items-center gap-2 flex-wrap">
                         <span className="text-muted fs-8 fw-bold text-uppercase tracking-wider">Timeline:</span>
                         <div className="filter-pills-row">
-                            {["All", "Today", "Upcoming", "Completed"].map((timeOpt) => (
+                            {["All", "Upcoming", "Ongoing", "Today", "Completed"].map((timeOpt) => (
                                 <button
                                     key={timeOpt}
                                     className={`filter-pill ${dateFilter === timeOpt ? "active" : ""}`}
@@ -254,6 +294,26 @@ function Events() {
                                     style={{ fontSize: "0.85rem", padding: "5px 12px" }}
                                 >
                                     {timeOpt}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="d-flex align-items-center gap-2 flex-wrap">
+                        <span className="text-muted fs-8 fw-bold text-uppercase tracking-wider">Registration:</span>
+                        <div className="filter-pills-row">
+                            {[
+                                { label: "All", value: "All" },
+                                { label: "Open", value: "open" },
+                                { label: "Opens Soon", value: "upcoming" }
+                            ].map((regOpt) => (
+                                <button
+                                    key={regOpt.value}
+                                    className={`filter-pill ${regStatusFilter === regOpt.value ? "active" : ""}`}
+                                    onClick={() => setRegStatusFilter(regOpt.value)}
+                                    style={{ fontSize: "0.85rem", padding: "5px 12px" }}
+                                >
+                                    {regOpt.label}
                                 </button>
                             ))}
                         </div>

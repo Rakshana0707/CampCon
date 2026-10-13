@@ -47,6 +47,15 @@ const verifyTicketAndMarkAttendance = async (req, res, next) => {
             return res.status(400).json({ success: false, error: `Ticket is invalid. Registration status is ${registration.status}.` });
         }
 
+        // 3b. Validate Attendance Window (Event must not have expired past its grace period)
+        const now = new Date();
+        if (registration.event.expiresAt && now > registration.event.expiresAt) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Attendance window has closed for this event. Ticket can no longer be scanned.' 
+            });
+        }
+
         // 4. Validate Duplicate Attendance
         if (registration.attendance === 'PRESENT') {
             return res.status(400).json({ success: false, error: 'Ticket has already been scanned. Attendance is already recorded.' });

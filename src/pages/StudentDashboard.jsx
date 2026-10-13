@@ -1,5 +1,5 @@
-import { useContext, useState } from "react";
-import { Link } from "react-router-dom";
+import { useContext, useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import DashboardLayout from "../layouts/DashboardLayout";
 import NotificationCard from "../components/NotificationCard";
@@ -17,15 +17,34 @@ import {
     FaPrint,
     FaTimes,
     FaClock,
-    FaInfoCircle
+    FaInfoCircle,
+    FaQrcode,
+    FaMapMarkerAlt
 } from "react-icons/fa";
 
 function StudentDashboard() {
     const { currentUser, events, registrations, bookmarks, notifications, cancelEventRegistration, markNotificationAsRead } = useContext(AppContext);
+    const [searchParams, setSearchParams] = useSearchParams();
     
     const [selectedTicketEvent, setSelectedTicketEvent] = useState(null);
     const [selectedCert, setSelectedCert] = useState(null);
-    const [activeTab, setActiveTab] = useState("upcoming");
+    const [activeTab, setActiveTab] = useState(searchParams.get("tab") === "tickets" ? "tickets" : "upcoming");
+
+    useEffect(() => {
+        const tabParam = searchParams.get("tab");
+        if (tabParam && ["tickets", "upcoming", "completed", "pending", "cancelled"].includes(tabParam)) {
+            setActiveTab(tabParam);
+        }
+    }, [searchParams]);
+
+    const handleTabChange = (tab) => {
+        setActiveTab(tab);
+        if (tab === "tickets") {
+            setSearchParams({ tab: "tickets" });
+        } else {
+            setSearchParams({});
+        }
+    };
 
     // Gather student registrations and helper details
     const studentRegs = registrations.filter((r) => r.studentId === currentUser.id);
@@ -48,6 +67,12 @@ function StudentDashboard() {
     const pendingRegs = studentRegs.filter((r) => r.status === "Pending");
 
     const cancelledRegs = studentRegs.filter((r) => r.status === "Cancelled" || r.status === "Rejected");
+
+    // All active registered tickets (Approved or Pending)
+    const ticketRegs = studentRegs.filter((r) => {
+        const evt = getEventForReg(r);
+        return evt && (r.status === "Approved" || r.status === "Pending");
+    });
 
     // Bookmarked events
     const savedEvents = events.filter((e) => bookmarks?.includes(e.id));
@@ -125,6 +150,7 @@ function StudentDashboard() {
     // Helper to get active registrations depending on the tab selected
     const getActiveRegs = () => {
         switch (activeTab) {
+            case "tickets": return ticketRegs;
             case "upcoming": return upcomingRegs;
             case "completed": return completedRegs;
             case "pending": return pendingRegs;
@@ -145,28 +171,134 @@ function StudentDashboard() {
             {/* Header Tabs Row */}
             <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between mb-4 border-bottom border-secondary pb-3 gap-2">
                 <h3 className="text-white mb-0 fw-bold d-flex align-items-center gap-2 fs-5" style={{ fontFamily: "var(--font-heading)" }}>
-                    <FaCalendarCheck className="text-primary" /> My Registrations
+                    {activeTab === "tickets" ? (
+                        <>
+                            <FaTicketAlt className="text-primary" /> My Event Tickets Wallet
+                        </>
+                    ) : (
+                        <>
+                            <FaCalendarCheck className="text-primary" /> My Registrations
+                        </>
+                    )}
                 </h3>
                 <div className="d-flex flex-wrap gap-1">
+                    <button
+                        className={`btn btn-sm py-1 px-3 fs-8 rounded-pill d-flex align-items-center gap-1 fw-semibold ${activeTab === "tickets" ? 'btn-primary' : 'btn-outline-light border-0'}`}
+                        onClick={() => handleTabChange("tickets")}
+                    >
+                        <FaQrcode size={12} /> My Tickets ({ticketRegs.length})
+                    </button>
                     {["upcoming", "completed", "pending", "cancelled"].map((tab) => (
                         <button
                             key={tab}
                             className={`btn btn-sm py-1 px-3 fs-8 rounded-pill text-capitalize ${activeTab === tab ? 'btn-primary' : 'btn-outline-light border-0'}`}
-                            onClick={() => setActiveTab(tab)}
+                            onClick={() => handleTabChange(tab)}
                         >
                             {tab} (
-                                tab === "upcoming" ? upcomingRegs.length :
+                                {tab === "upcoming" ? upcomingRegs.length :
                                 tab === "completed" ? completedRegs.length :
                                 tab === "pending" ? pendingRegs.length :
-                                cancelledRegs.length
+                                cancelledRegs.length}
                             )
                         </button>
                     ))}
                 </div>
             </div>
 
-            {/* Registrations List */}
-            {activeRegsList.length === 0 ? (
+            {/* Dedicated Tickets Wallet View vs Standard Registrations List */}
+            {activeTab === "tickets" ? (
+                ticketRegs.length === 0 ? (
+                    <div className="empty-state">
+                        <FaTicketAlt />
+                        <h5>No active event tickets yet</h5>
+                        <p>Register for an upcoming college event or symposium to generate your unique QR entry ticket.</p>
+                        <Link to="/events" className="btn btn-primary mt-2">
+                            Discover Events
+                        </Link>
+                    </div>
+                ) : (
+                    <div className="row g-4">
+                        {ticketRegs.map((reg) => {
+                            const event = getEventForReg(reg);
+                            if (!event) return null;
+                            const ticketCode = reg.ticketId || `CC-${event.id}-${currentUser.id}`;
+                            const isPast = new Date(event.date) < today;
+
+                            return (
+                                <div key={reg.id} className="col-xl-6">
+                                    <div
+                                        className="rounded-4 overflow-hidden h-100 d-flex flex-column justify-content-between shadow-sm"
+                                        style={{
+                                            background: "var(--bg-card)",
+                                            border: "1px solid var(--border-editorial)"
+                                        }}
+                                    >
+                                        {/* Top Banner */}
+                                        <div
+                                            className="px-4 py-3 d-flex justify-content-between align-items-center"
+                                            style={{ background: "linear-gradient(135deg, #1b3b8b 0%, #2563eb 100%)" }}
+                                        >
+                                            <div>
+                                                <span className="badge bg-white bg-opacity-20 text-white fs-9 me-2">{event.category}</span>
+                                                <span className="text-white text-opacity-75 fs-9 text-uppercase fw-bold">Entry Pass</span>
+                                            </div>
+                                            <span className={`badge ${reg.status === "Approved" ? "bg-success" : "bg-warning text-dark"} fs-9`}>
+                                                {reg.status === "Approved" ? "✓ Confirmed" : "⏳ Pending Approval"}
+                                            </span>
+                                        </div>
+
+                                        {/* Middle Content + Live QR Side-by-Side */}
+                                        <div className="p-4 d-flex flex-column flex-sm-row align-items-center gap-4">
+                                            <div className="flex-grow-1 w-100">
+                                                <h5 className="text-white fw-bold mb-2">{event.title}</h5>
+                                                <div className="d-flex flex-column gap-1 text-muted fs-8 mb-3">
+                                                    <div><FaCalendarAlt className="me-2 text-primary" /> {event.date} • {event.time}</div>
+                                                    <div><FaMapMarkerAlt className="me-2 text-danger" /> {event.venue}</div>
+                                                </div>
+                                                <div className="p-2 rounded-3 mb-2" style={{ background: "rgba(128,128,128,0.08)", border: "1px solid var(--border-hairline)" }}>
+                                                    <div className="fs-9 text-muted text-uppercase">Attendee</div>
+                                                    <div className="fs-8 fw-bold text-white">{currentUser.name} <span className="text-muted fw-normal">({currentUser.department})</span></div>
+                                                </div>
+                                                <div className="font-monospace fs-9 fw-bold" style={{ color: "var(--accent-color)" }}>
+                                                    Ticket ID: {ticketCode}
+                                                </div>
+                                            </div>
+
+                                            <div className="text-center flex-shrink-0">
+                                                <QRCode value={ticketCode} size={112} />
+                                                <small className="text-muted d-block mt-1 fs-9">Unique QR</small>
+                                            </div>
+                                        </div>
+
+                                        {/* Footer Actions */}
+                                        <div className="px-4 py-3 border-top border-secondary d-flex justify-content-between align-items-center gap-2" style={{ background: "rgba(0,0,0,0.12)" }}>
+                                            <Link to={`/events/${event.id}`} className="btn btn-outline-light btn-sm px-3 fs-8">
+                                                <FaExternalLinkAlt size={10} className="me-1" /> Event Page
+                                            </Link>
+                                            <div className="d-flex gap-2">
+                                                {!isPast && (
+                                                    <button
+                                                        className="btn btn-outline-danger btn-sm px-3 fs-8"
+                                                        onClick={() => cancelEventRegistration(event.id)}
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                )}
+                                                <button
+                                                    className="btn btn-primary btn-sm px-3 fs-8 fw-bold d-flex align-items-center gap-1"
+                                                    onClick={() => setSelectedTicketEvent({ ...event, ticketId: ticketCode, regStatus: reg.status })}
+                                                >
+                                                    <FaTicketAlt size={11} /> Full Pass
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )
+            ) : activeRegsList.length === 0 ? (
                 <div className="empty-state">
                     <FaCalendarAlt />
                     <h5>No registrations found</h5>
@@ -231,7 +363,7 @@ function StudentDashboard() {
                                             <>
                                                 <button
                                                     className="btn btn-primary btn-sm d-flex align-items-center gap-1 py-2 px-3 fs-8 fw-semibold"
-                                                    onClick={() => setSelectedTicketEvent({ ...event, ticketId: reg.ticketId })}
+                                                    onClick={() => setSelectedTicketEvent({ ...event, ticketId: reg.ticketId, regStatus: reg.status })}
                                                 >
                                                     <FaTicketAlt size={11} /> Ticket
                                                 </button>
@@ -308,49 +440,66 @@ function StudentDashboard() {
 
             {/* Ticket Modal Overlay */}
             {selectedTicketEvent && (
-                <div className="modal fade show d-block" tabIndex="-1" style={{ background: "rgba(0, 0, 0, 0.8)", zIndex: 1050 }}>
-                    <div className="modal-dialog modal-dialog-centered">
+                <div className="modal fade show d-block" tabIndex="-1" style={{ background: "rgba(9, 13, 22, 0.85)", backdropFilter: "blur(6px)", zIndex: 1050 }}>
+                    <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: "440px" }}>
                         <div className="modal-content bg-transparent border-0">
                             <div className="ticket-wrapper">
                                 <div className="ticket-header">
-                                    <h3 className="mb-1 text-white fw-bold">EVENT TICKET</h3>
-                                    <span className="badge bg-dark bg-opacity-30 border border-white border-opacity-30">{selectedTicketEvent.category}</span>
+                                    <div className="d-flex justify-content-between align-items-center mb-2">
+                                        <span className="badge bg-white bg-opacity-20 text-white px-3 py-1 rounded-pill">{selectedTicketEvent.category}</span>
+                                        <span className="badge bg-success text-white px-3 py-1 rounded-pill">
+                                            ✓ {selectedTicketEvent.regStatus || "Confirmed"}
+                                        </span>
+                                    </div>
+                                    <h3 className="mb-0 text-white fw-extrabold tracking-wider">EVENT ENTRY PASS</h3>
+                                    <small className="text-white text-opacity-75">CampusConnect Official Admission Ticket</small>
                                 </div>
                                 <div className="ticket-body">
-                                    <h4 className="text-white text-center mb-4 fw-extrabold">{selectedTicketEvent.title}</h4>
+                                    <h4 className="text-white text-center mb-3 fw-bold" style={{ fontSize: "1.3rem", lineHeight: 1.3 }}>
+                                        {selectedTicketEvent.title}
+                                    </h4>
                                     
-                                    <div className="row g-3 mb-4 text-white text-opacity-80">
+                                    <div className="row g-3 mb-2 text-start p-3 rounded-3" style={{ background: "rgba(128, 128, 128, 0.08)", border: "1px solid var(--border-hairline)" }}>
                                         <div className="col-6">
-                                            <span className="text-muted d-block fs-8 text-uppercase">Attendee</span>
-                                            <strong>{currentUser.name}</strong>
+                                            <span className="text-muted d-block fs-9 text-uppercase">Attendee</span>
+                                            <strong className="text-white fs-7 d-block text-truncate">{currentUser.name}</strong>
                                         </div>
                                         <div className="col-6">
-                                            <span className="text-muted d-block fs-8 text-uppercase">Department</span>
-                                            <strong>{currentUser.department}</strong>
+                                            <span className="text-muted d-block fs-9 text-uppercase">Department</span>
+                                            <strong className="text-white fs-7 d-block text-truncate">{currentUser.department}</strong>
                                         </div>
                                         <div className="col-6">
-                                            <span className="text-muted d-block fs-8 text-uppercase">Date & Time</span>
-                                            <strong>{selectedTicketEvent.date}<br />{selectedTicketEvent.time}</strong>
+                                            <span className="text-muted d-block fs-9 text-uppercase">Date & Time</span>
+                                            <strong className="text-white fs-8 d-block">{selectedTicketEvent.date}</strong>
+                                            <span className="text-muted fs-9">{selectedTicketEvent.time}</span>
                                         </div>
                                         <div className="col-6">
-                                            <span className="text-muted d-block fs-8 text-uppercase">Venue</span>
-                                            <strong>{selectedTicketEvent.venue}</strong>
+                                            <span className="text-muted d-block fs-9 text-uppercase">Venue</span>
+                                            <strong className="text-white fs-8 d-block">{selectedTicketEvent.venue}</strong>
                                         </div>
                                     </div>
 
                                     <div className="ticket-divider"></div>
 
-                                    <div className="text-center mt-3">
-                                        <span className="text-muted d-block fs-8 text-uppercase mb-2">Scan Code at Entrance</span>
-                                        <div className="d-flex justify-content-center">
-                                            <QRCode value={selectedTicketEvent.ticketId || `CC-${selectedTicketEvent.id}-${currentUser.id}`} size={120} />
+                                    <div className="text-center">
+                                        <span className="text-muted d-block fs-9 text-uppercase tracking-wider mb-2">Scan Unique QR Code at Entrance</span>
+                                        <div className="d-flex justify-content-center my-2">
+                                            <QRCode value={selectedTicketEvent.ticketId || `CC-${selectedTicketEvent.id}-${currentUser.id}`} size={148} />
                                         </div>
-                                        <small className="text-muted d-block mt-3 font-monospace">Ticket ID: {selectedTicketEvent.ticketId || `CC-${selectedTicketEvent.id}-${currentUser.id}`}</small>
+                                        <div className="mt-2 px-3 py-1 rounded-pill d-inline-block font-monospace fs-8 fw-bold" style={{ background: "rgba(37, 99, 235, 0.12)", color: "var(--accent-color)", border: "1px solid rgba(37, 99, 235, 0.25)" }}>
+                                            ID: {selectedTicketEvent.ticketId || `CC-${selectedTicketEvent.id}-${currentUser.id}`}
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="p-3 bg-dark bg-opacity-50 text-center border-top border-secondary">
+                                <div className="p-3 bg-dark bg-opacity-50 d-flex justify-content-between align-items-center gap-2 border-top border-secondary px-4">
                                     <button 
-                                        className="btn btn-primary btn-sm px-4"
+                                        className="btn btn-outline-light btn-sm px-3 d-flex align-items-center gap-1"
+                                        onClick={() => window.print()}
+                                    >
+                                        <FaPrint size={11} /> Print Pass
+                                    </button>
+                                    <button 
+                                        className="btn btn-primary btn-sm px-4 fw-bold"
                                         onClick={() => setSelectedTicketEvent(null)}
                                     >
                                         Close Ticket

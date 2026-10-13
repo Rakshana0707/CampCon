@@ -13,6 +13,12 @@ const {
     toggleUserActiveStatus,
     updateUserAffiliation
 } = require('../controllers/admin.controller');
+const {
+    getAdminInstitutions,
+    createAdminInstitution,
+    updateAdminInstitution,
+    updateInstitutionStatus
+} = require('../controllers/institution.controller');
 const { authenticateToken, requireAdmin } = require('../middleware/auth.middleware');
 
 // Protect all admin routes
@@ -32,5 +38,11 @@ router.patch('/organizers/:id/status', toggleEntityStatus);
 router.post('/organizers/assign', assignUserToEntity);
 router.delete('/organizers/assignments/:id', revokeAssignment);
 router.post('/organizers/invite', createOrganizerAccount);
+
+// External College / Institution Directory Management
+router.get('/institutions', getAdminInstitutions);
+router.post('/institutions', createAdminInstitution);
+router.put('/institutions/:id', updateAdminInstitution);
+router.patch('/institutions/:id/status', updateInstitutionStatus);
 
 module.exports = router;

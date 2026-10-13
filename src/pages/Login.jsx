@@ -48,46 +48,59 @@ function Login() {
     // Quick Login Seed Accounts
     const handleQuickLogin = (role) => {
         let testEmail = "";
-        if (role === "student") testEmail = "student@college.edu";
-        else if (role === "organizer") testEmail = "organizer@college.edu";
-        else if (role === "organizer-pending") testEmail = "vikram@college.edu";
-        else if (role === "admin") testEmail = "admin@college.edu";
+        let testPassword = "password123";
+        if (role === "student") {
+            testEmail = "student@college.edu";
+        } else if (role === "organizer") {
+            testEmail = "organizer@college.edu";
+        } else if (role === "organizer-pending") {
+            testEmail = "vikram@college.edu";
+        } else if (role === "admin") {
+            testEmail = "admin@college.edu";
+            testPassword = "Admin@123";
+        }
 
         setEmail(testEmail);
-        setPassword("password123");
+        setPassword(testPassword);
     };
 
     return (
-        <div className="auth-page">
+        <div className="py-5" style={{ minHeight: "85vh", backgroundColor: "var(--bg-primary)" }}>
             <div className="container">
                 {/* Back to Home Button */}
                 <div className="mb-4 text-center">
-                    <Link to="/" className="btn btn-outline-light btn-sm d-inline-flex align-items-center gap-2">
-                        <FaArrowLeft /> Back to Home
+                    <Link to="/" className="btn btn-editorial-secondary btn-sm d-inline-flex align-items-center gap-2">
+                        <FaArrowLeft size={11} /> Back to Front Page
                     </Link>
                 </div>
 
                 <div className="row justify-content-center">
                     <div className="col-md-6 col-lg-5">
-                        <div className="auth-card glass-panel shadow-lg">
-                            <h2 className="text-center fw-bold text-white mb-2" style={{ fontFamily: "var(--font-heading)" }}>
-                                Welcome Back 👋
-                            </h2>
-                            <p className="text-center text-muted mb-4">
-                                Sign in to check your campus events
-                            </p>
+                        <div className="editorial-panel p-4 p-md-5 shadow-sm">
+                            <div className="text-center mb-4">
+                                <span className="editorial-meta-tag mb-1">Account Authentication</span>
+                                <h2 className="serif-heading mb-1" style={{ fontSize: "2rem" }}>
+                                    Welcome Back
+                                </h2>
+                                <p className="text-muted fs-8 mb-0">
+                                    Sign in to your campus account to manage registrations
+                                </p>
+                            </div>
 
                             <form onSubmit={handleLogin}>
                                 <div className="mb-3">
-                                    <label htmlFor="loginEmail" className="text-white form-label fw-medium">Email Address <span className="text-danger">*</span></label>
+                                    <label htmlFor="loginEmail" className="form-label fw-semibold fs-8" style={{ color: "var(--text-main)" }}>
+                                        Email Address <span className="text-danger">*</span>
+                                    </label>
                                     <div className="input-group">
-                                        <span className="input-group-text bg-dark border-secondary text-muted">
-                                            <FaEnvelope />
+                                        <span className="input-group-text border-end-0" style={{ backgroundColor: "var(--bg-secondary)", borderColor: "var(--border-editorial)", color: "var(--text-muted)" }}>
+                                            <FaEnvelope size={12} />
                                         </span>
                                         <input
                                             id="loginEmail"
                                             type="email"
-                                            className="form-control"
+                                            className="form-control border-start-0 fs-8"
+                                            style={{ backgroundColor: "var(--bg-secondary)", borderColor: "var(--border-editorial)", color: "var(--text-main)" }}
                                             placeholder="name@college.edu"
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
@@ -98,15 +111,18 @@ function Login() {
                                 </div>
 
                                 <div className="mb-4">
-                                    <label htmlFor="loginPassword" className="text-white form-label fw-medium">Password <span className="text-danger">*</span></label>
+                                    <label htmlFor="loginPassword" className="form-label fw-semibold fs-8" style={{ color: "var(--text-main)" }}>
+                                        Password <span className="text-danger">*</span>
+                                    </label>
                                     <div className="input-group">
-                                        <span className="input-group-text bg-dark border-secondary text-muted">
-                                            <FaLock />
+                                        <span className="input-group-text border-end-0" style={{ backgroundColor: "var(--bg-secondary)", borderColor: "var(--border-editorial)", color: "var(--text-muted)" }}>
+                                            <FaLock size={12} />
                                         </span>
                                         <input
                                             id="loginPassword"
                                             type="password"
-                                            className="form-control"
+                                            className="form-control border-start-0 fs-8"
+                                            style={{ backgroundColor: "var(--bg-secondary)", borderColor: "var(--border-editorial)", color: "var(--text-main)" }}
                                             placeholder="••••••••"
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
@@ -117,7 +133,7 @@ function Login() {
                                 </div>
 
                                 <button 
-                                    className="btn btn-primary w-100 py-3 fw-bold mb-3 fs-6 d-flex justify-content-center align-items-center gap-2"
+                                    className="btn btn-editorial-primary w-100 py-2 fw-semibold mb-3 fs-7 d-flex justify-content-center align-items-center gap-2"
                                     type="submit"
                                     disabled={isSubmitting}
                                 >
@@ -133,9 +149,9 @@ function Login() {
                             </form>
 
                             {/* Demo Accounts Panel */}
-                            <div className="mt-4 p-3 rounded bg-dark bg-opacity-50 border border-secondary">
-                                <span className="text-muted d-block text-center fs-7 mb-2 fw-semibold">
-                                    QUICK DEMO ACCOUNTS
+                            <div className="mt-4 p-3 rounded" style={{ backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border-editorial)" }}>
+                                <span className="text-muted d-block text-center fs-9 mb-2 fw-bold text-uppercase tracking-wider">
+                                    Quick Demo Profiles
                                 </span>
                                 <div className="d-flex flex-column gap-2">
                                     <button

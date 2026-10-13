@@ -1,6 +1,5 @@
 const prisma = require('../config/prisma');
 
-// 1. Create Event (Organizer or Admin)
 const createEvent = async (req, res, next) => {
     try {
         const { 
@@ -9,12 +8,18 @@ const createEvent = async (req, res, next) => {
             category, 
             department, 
             date, 
+            endDate,
             venue, 
             totalSeats, 
             image, 
             requiresApproval, 
             deadline,
+            internalRegOpensAt,
+            externalRegOpensAt,
+            isDemo,
             eventType,
+            eventFormat,
+            numberOfDays,
             organizerEntityId,
             externalParticipationAllowed,
             eligibleParticipants,
@@ -28,11 +33,35 @@ const createEvent = async (req, res, next) => {
         }
 
         // Timeline Validation
-        const eventDate = new Date(date);
-        const eventDeadline = deadline ? new Date(deadline) : eventDate;
+        const eventStartDate = new Date(date);
+        const eventEndDate = endDate ? new Date(endDate) : eventStartDate;
+        
+        if (eventEndDate < eventStartDate) {
+            return res.status(400).json({ success: false, error: 'Event end date/time cannot be before start date/time.' });
+        }
 
-        if (eventDeadline > eventDate) {
-            return res.status(400).json({ success: false, error: 'Deadline cannot be after the event date.' });
+        const validEventFormat = eventFormat === 'SYMPOSIUM' ? 'SYMPOSIUM' : 'REGULAR';
+        
+        // Calculate duration in days if Symposium
+        let parsedDays = numberOfDays ? parseInt(numberOfDays, 10) : 1;
+        if (validEventFormat === 'SYMPOSIUM') {
+            const msPerDay = 24 * 60 * 60 * 1000;
+            const startDayUtc = Date.UTC(eventStartDate.getFullYear(), eventStartDate.getMonth(), eventStartDate.getDate());
+            const endDayUtc = Date.UTC(eventEndDate.getFullYear(), eventEndDate.getMonth(), eventEndDate.getDate());
+            const diffDays = Math.max(1, Math.round((endDayUtc - startDayUtc) / msPerDay) + 1);
+
+            if (numberOfDays && parsedDays !== diffDays) {
+                return res.status(400).json({
+                    success: false,
+                    error: `Configured duration (${parsedDays} days) does not match the schedule dates (${diffDays} days).`
+                });
+            }
+            parsedDays = diffDays;
+        }
+
+        const eventDeadline = deadline ? new Date(deadline) : eventStartDate;
+        if (eventDeadline > eventEndDate) {
+            return res.status(400).json({ success: false, error: 'Registration deadline cannot be after the event end date.' });
         }
 
         // Validate Event Type - Strictly required, no silent fallback
@@ -43,6 +72,35 @@ const createEvent = async (req, res, next) => {
             });
         }
         const validEventType = eventType;
+
+        // Registration Opening Dates Validation
+        let parsedInternalOpens = internalRegOpensAt ? new Date(internalRegOpensAt) : new Date();
+        if (internalRegOpensAt) {
+            if (isNaN(parsedInternalOpens.getTime())) {
+                return res.status(400).json({ success: false, error: 'Invalid internal registration opening date/time.' });
+            }
+            if (parsedInternalOpens > eventDeadline) {
+                return res.status(400).json({ success: false, error: 'Internal registration opening date cannot be after the closing deadline.' });
+            }
+        }
+
+        let parsedExternalOpens = null;
+        if (validEventType === 'INTER_COLLEGE') {
+            if (externalRegOpensAt) {
+                parsedExternalOpens = new Date(externalRegOpensAt);
+                if (isNaN(parsedExternalOpens.getTime())) {
+                    return res.status(400).json({ success: false, error: 'Invalid external registration opening date/time.' });
+                }
+                if (parsedExternalOpens > eventDeadline) {
+                    return res.status(400).json({ success: false, error: 'External registration opening date cannot be after the closing deadline.' });
+                }
+            } else {
+                parsedExternalOpens = parsedInternalOpens;
+            }
+        }
+
+        // Calculate expiresAt: 24 hours after scheduled end time
+        const expiresAt = new Date(eventEndDate.getTime() + 24 * 60 * 60 * 1000);
 
         // Validate Official Organizing Entity
         let parsedEntityId = null;
@@ -112,19 +170,26 @@ const createEvent = async (req, res, next) => {
                 description: description || '',
                 category: category || 'General',
                 department: finalDepartment,
-                date: eventDate,
+                date: eventStartDate,
+                endDate: eventEndDate,
+                expiresAt,
                 venue,
                 totalSeats: parseInt(totalSeats, 10),
                 availableSeats: parseInt(totalSeats, 10),
                 image,
                 requiresApproval: requiresApproval || false,
                 deadline: eventDeadline,
+                internalRegOpensAt: parsedInternalOpens,
+                externalRegOpensAt: parsedExternalOpens,
+                isDemo: Boolean(isDemo),
                 eventType: validEventType,
+                eventFormat: validEventFormat,
+                numberOfDays: parsedDays,
                 organizerEntityId: parsedEntityId,
                 externalParticipationAllowed: validEventType === 'INTER_COLLEGE' ? 
                     (externalParticipationAllowed !== undefined ? Boolean(externalParticipationAllowed) : true) : 
                     false,
-                eligibleParticipants: eligibleParticipants || (validEventType === 'INTRA_COLLEGE' ? 'Our College Students Only' : 'Inter-College Students'),
+                eligibleParticipants: eligibleParticipants || (validEventType === 'INTRA_COLLEGE' ? 'Coimbatore Institute of Technology Students Only' : 'Inter-College Students'),
                 contactPerson: contactPerson || null,
                 contactEmail: contactEmail || null,
                 organizerId: req.user.id,
@@ -132,6 +197,7 @@ const createEvent = async (req, res, next) => {
             },
             include: {
                 organizerEntity: true,
+                activities: { orderBy: [{ dayNumber: 'asc' }, { startTime: 'asc' }] },
                 organizer: { select: { id: true, name: true, email: true } }
             }
         });
@@ -152,7 +218,9 @@ const getAllEvents = async (req, res, next) => {
             status, 
             eventType, 
             organizerEntityId, 
-            search 
+            search,
+            regStatus,
+            includeExpired
         } = req.query;
         let whereClause = {};
 
@@ -201,17 +269,65 @@ const getAllEvents = async (req, res, next) => {
             ];
         }
 
+        const now = new Date();
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
+        // Timeline & Automatic Expiration:
+        // By default, active discovery listings exclude events that have expired (past endDate + 24h grace period).
         if (timeline === 'Upcoming') {
-            whereClause.date = { gte: today };
+            whereClause.date = { gt: now };
+            whereClause.expiresAt = { gt: now };
+        } else if (timeline === 'Ongoing') {
+            whereClause.date = { lte: now };
+            whereClause.endDate = { gte: now };
         } else if (timeline === 'Completed') {
-            whereClause.date = { lt: today };
+            whereClause.OR = [
+                { endDate: { lt: now } },
+                { endDate: null, date: { lt: today } }
+            ];
         } else if (timeline === 'Today') {
             const tomorrow = new Date(today);
             tomorrow.setDate(tomorrow.getDate() + 1);
             whereClause.date = { gte: today, lt: tomorrow };
+        } else {
+            // Default active listings: exclude expired events
+            if (includeExpired !== 'true') {
+                whereClause.OR = [
+                    { expiresAt: { gt: now } },
+                    { expiresAt: null, date: { gte: today } }
+                ];
+            }
+        }
+
+        // Registration status filters
+        if (regStatus === 'open') {
+            // For internal or general users, internalRegOpensAt <= now and deadline >= now
+            whereClause.AND = [
+                ...(whereClause.AND || []),
+                {
+                    OR: [
+                        { internalRegOpensAt: null },
+                        { internalRegOpensAt: { lte: now } }
+                    ]
+                },
+                {
+                    OR: [
+                        { deadline: null },
+                        { deadline: { gte: now } }
+                    ]
+                },
+                {
+                    OR: [
+                        { endDate: null },
+                        { endDate: { gte: now } }
+                    ]
+                },
+                { availableSeats: { gt: 0 } }
+            ];
+        } else if (regStatus === 'upcoming') {
+            // Registration not yet opened
+            whereClause.internalRegOpensAt = { gt: now };
         }
 
         const events = await prisma.event.findMany({
@@ -248,6 +364,13 @@ const getEventById = async (req, res, next) => {
                         contactPerson: true,
                         isActive: true 
                     } 
+                },
+                activities: {
+                    where: { isActive: true },
+                    orderBy: [{ dayNumber: 'asc' }, { startTime: 'asc' }],
+                    include: {
+                        _count: { select: { registrations: true } }
+                    }
                 }
             }
         });
@@ -283,7 +406,12 @@ const getMyEvents = async (req, res, next) => {
             where: { organizerId: req.user.id },
             include: {
                 organizerEntity: true,
-                _count: { select: { registrations: true } }
+                activities: {
+                    where: { isActive: true },
+                    orderBy: [{ dayNumber: 'asc' }, { startTime: 'asc' }],
+                    include: { _count: { select: { registrations: true } } }
+                },
+                _count: { select: { registrations: true, activities: true } }
             },
             orderBy: { date: 'desc' }
         });
@@ -378,6 +506,54 @@ const updateEvent = async (req, res, next) => {
             validEventType = req.body.eventType;
         }
 
+        // Handle dates and lifecycle
+        const eventStartDate = req.body.date ? new Date(req.body.date) : event.date;
+        let eventEndDate = req.body.endDate ? new Date(req.body.endDate) : (event.endDate || eventStartDate);
+        if (eventEndDate < eventStartDate) {
+            return res.status(400).json({ success: false, error: 'End date/time cannot be before start date/time.' });
+        }
+
+        let eventDeadline = event.deadline;
+        if (req.body.deadline !== undefined) {
+            if (req.body.deadline) {
+                eventDeadline = new Date(req.body.deadline);
+                if (eventDeadline > eventEndDate) {
+                    return res.status(400).json({ success: false, error: 'Registration deadline cannot be after the event end date.' });
+                }
+            } else {
+                eventDeadline = null;
+            }
+        }
+
+        let parsedInternalOpens = event.internalRegOpensAt;
+        if (req.body.internalRegOpensAt !== undefined) {
+            if (req.body.internalRegOpensAt) {
+                parsedInternalOpens = new Date(req.body.internalRegOpensAt);
+                if (eventDeadline && parsedInternalOpens > eventDeadline) {
+                    return res.status(400).json({ success: false, error: 'Internal registration opening date cannot be after the registration deadline.' });
+                }
+            } else {
+                parsedInternalOpens = null;
+            }
+        }
+
+        let parsedExternalOpens = event.externalRegOpensAt;
+        if (validEventType === 'INTRA_COLLEGE') {
+            parsedExternalOpens = null;
+        } else if (req.body.externalRegOpensAt !== undefined) {
+            if (req.body.externalRegOpensAt) {
+                parsedExternalOpens = new Date(req.body.externalRegOpensAt);
+                if (eventDeadline && parsedExternalOpens > eventDeadline) {
+                    return res.status(400).json({ success: false, error: 'External registration opening date cannot be after the registration deadline.' });
+                }
+            } else {
+                parsedExternalOpens = null;
+            }
+        }
+
+        // Recalculate expiresAt: 24 hours after eventEndDate
+        const expiresAt = new Date(eventEndDate.getTime() + 24 * 60 * 60 * 1000);
+
         const updatedEvent = await prisma.event.update({
             where: { id: parseInt(id) },
             data: {
@@ -390,9 +566,15 @@ const updateEvent = async (req, res, next) => {
                 requiresApproval: req.body.requiresApproval !== undefined ? req.body.requiresApproval : undefined,
                 totalSeats: req.body.totalSeats ? parseInt(req.body.totalSeats) : undefined,
                 availableSeats: newAvailableSeats,
-                date: req.body.date ? new Date(req.body.date) : undefined,
-                deadline: req.body.deadline ? new Date(req.body.deadline) : undefined,
+                date: eventStartDate,
+                endDate: eventEndDate,
+                expiresAt,
+                deadline: eventDeadline,
+                internalRegOpensAt: parsedInternalOpens,
+                externalRegOpensAt: parsedExternalOpens,
                 eventType: validEventType,
+                eventFormat: req.body.eventFormat !== undefined ? req.body.eventFormat : undefined,
+                numberOfDays: req.body.numberOfDays !== undefined ? parseInt(req.body.numberOfDays, 10) : undefined,
                 organizerEntityId: parsedEntityId,
                 externalParticipationAllowed: validEventType === 'INTER_COLLEGE' ? 
                     (req.body.externalParticipationAllowed !== undefined ? Boolean(req.body.externalParticipationAllowed) : event.externalParticipationAllowed) : 

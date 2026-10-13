@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const prisma = require('../config/prisma');
+const { ensureInstitutionsSeeded, validateExternalInstitutionSelection } = require('./institution.controller');
 
 // Helper to generate JWT token
 const generateToken = (userId) => {
@@ -15,7 +16,21 @@ const generateToken = (userId) => {
  */
 const register = async (req, res, next) => {
     try {
-        const { name, email, password, role, department, rollNumber } = req.body;
+        await ensureInstitutionsSeeded();
+
+        const {
+            name,
+            email,
+            password,
+            role,
+            department,
+            rollNumber,
+            collegeName,
+            affiliationType,
+            collegeState,
+            collegeDistrict,
+            institutionId
+        } = req.body;
 
         if (!name || !email || !password) {
             return res.status(400).json({ success: false, error: 'Name, email, and password are required.' });
@@ -32,7 +47,6 @@ const register = async (req, res, next) => {
         const passwordHash = await bcrypt.hash(password, salt);
 
         // Map frontend role format: Only STUDENT is permitted via public registration!
-        // Organizers and Admins must be provisioned or invited by an Administrator.
         let dbRole = 'STUDENT';
         if (role) {
             const upRole = role.toUpperCase();
@@ -48,25 +62,58 @@ const register = async (req, res, next) => {
         }
 
         // Determine institutional affiliation
-        const { collegeName } = req.body;
-        let affiliationStatus = 'UNVERIFIED';
-        let finalCollegeName = 'Our College';
-
         const trimmedCollege = collegeName ? collegeName.trim() : '';
+        const lowerCollege = trimmedCollege.toLowerCase();
+        const isInternalCollegeClaim =
+            affiliationType !== 'EXTERNAL' &&
+            !institutionId &&
+            (!trimmedCollege ||
+                lowerCollege === 'coimbatore institute of technology' ||
+                lowerCollege === 'cit' ||
+                lowerCollege === 'our college' ||
+                lowerCollege === 'psg');
+
+        let affiliationStatus = 'UNVERIFIED';
+        let finalCollegeName = 'Coimbatore Institute of Technology';
+        let finalState = 'Tamil Nadu';
+        let finalDistrict = 'Coimbatore';
+        let finalInstitutionId = null;
+
         const lowerEmail = email.toLowerCase().trim();
 
-        if (trimmedCollege && trimmedCollege.toLowerCase() !== 'our college' && trimmedCollege.toLowerCase() !== 'psg' && trimmedCollege !== '') {
-            // External college student
+        if (!isInternalCollegeClaim) {
+            // External college student: MUST select a valid, active institution from the directory
+            const validation = await validateExternalInstitutionSelection({
+                institutionId,
+                state: collegeState,
+                district: collegeDistrict
+            });
+
+            if (!validation.valid) {
+                return res.status(400).json({
+                    success: false,
+                    error: validation.error
+                });
+            }
+
             affiliationStatus = 'EXTERNAL';
-            finalCollegeName = trimmedCollege;
-        } else if (lowerEmail.endsWith('.edu') || lowerEmail.endsWith('.ac.in') || lowerEmail.includes('@campusconnect.')) {
-            // Institutional email verified
-            affiliationStatus = 'INTERNAL_VERIFIED';
-            finalCollegeName = 'Our College';
+            finalInstitutionId = validation.institution.id;
+            finalCollegeName = validation.institution.name;
+            finalState = validation.institution.state;
+            finalDistrict = validation.institution.district;
         } else {
-            // Personal email claiming our college affiliation - requires administrative verification
-            affiliationStatus = 'UNVERIFIED';
-            finalCollegeName = 'Our College';
+            // Internal college student (Coimbatore Institute of Technology)
+            const citInst = await prisma.institution.findFirst({
+                where: { code: 'TN-CBE-CIT' }
+            });
+            if (citInst) {
+                finalInstitutionId = citInst.id;
+            }
+            if (lowerEmail.endsWith('.edu') || lowerEmail.endsWith('.ac.in') || lowerEmail.includes('@campusconnect.')) {
+                affiliationStatus = 'INTERNAL_VERIFIED';
+            } else {
+                affiliationStatus = 'UNVERIFIED';
+            }
         }
 
         // Create the user
@@ -79,8 +126,16 @@ const register = async (req, res, next) => {
                 department,
                 rollNumber,
                 collegeName: finalCollegeName,
+                collegeState: finalState,
+                collegeDistrict: finalDistrict,
+                institutionId: finalInstitutionId,
                 affiliationStatus,
                 isActive: true
+            },
+            include: {
+                institution: {
+                    select: { id: true, code: true, name: true, state: true, district: true, institutionType: true, isActive: true, status: true }
+                }
             }
         });
 
@@ -106,6 +161,8 @@ const register = async (req, res, next) => {
  */
 const login = async (req, res, next) => {
     try {
+        await ensureInstitutionsSeeded();
+
         const { email, password } = req.body;
 
         if (!email || !password) {
@@ -113,7 +170,14 @@ const login = async (req, res, next) => {
         }
 
         // Find user
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user = await prisma.user.findUnique({
+            where: { email },
+            include: {
+                institution: {
+                    select: { id: true, code: true, name: true, state: true, district: true, institutionType: true, isActive: true, status: true }
+                }
+            }
+        });
         if (!user) {
             return res.status(401).json({ success: false, error: 'Invalid email or password.' });
         }

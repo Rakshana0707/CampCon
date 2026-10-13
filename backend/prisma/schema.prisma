@@ -51,6 +51,11 @@ enum EventType {
   INTER_COLLEGE
 }
 
+enum EventFormat {
+  REGULAR
+  SYMPOSIUM
+}
+
 enum OrganizerType {
   DEPARTMENT
   CLUB
@@ -62,9 +67,54 @@ enum AffiliationStatus {
   UNVERIFIED
 }
 
+enum InstitutionStatus {
+  APPROVED
+  PENDING_VERIFICATION
+  REJECTED
+}
+
 // ------------------------------------
 // MODELS
 // ------------------------------------
+
+model District {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  state     String   @default("Tamil Nadu")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([state, isActive])
+}
+
+model Institution {
+  id                Int               @id @default(autoincrement())
+  name              String
+  code              String?           @unique // AISHE or AICTE identifier e.g. "1-44643113703" or "TN-CBE-CIT"
+  state             String            @default("Tamil Nadu")
+  district          String
+  institutionType   String?           @default("Engineering & Technology")
+  address           String?           @db.Text
+  university        String?
+  sourceDataset     String?           @default("AICTE_TAMIL_NADU_2024")
+  sourceRecordId    String?
+  isActive          Boolean           @default(true)
+  status            InstitutionStatus @default(APPROVED)
+  isVerifiedSample  Boolean           @default(false)
+  requestedByEmail  String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  users                 User[]
+  registrations         Registration[]
+  activityRegistrations ActivityRegistration[]
+
+  @@unique([name, district, state])
+  @@index([state, district])
+  @@index([isActive, status])
+  @@index([sourceDataset])
+}
 
 model User {
   id            Int       @id @default(autoincrement())
@@ -74,16 +124,22 @@ model User {
   role          Role      @default(STUDENT)
   department    String?
   rollNumber    String?
-  collegeName       String?           @default("Our College")
+  collegeName       String?           @default("Coimbatore Institute of Technology")
+  collegeState      String?           @default("Tamil Nadu")
+  collegeDistrict   String?           @default("Coimbatore")
+  institutionId     Int?
   affiliationStatus AffiliationStatus @default(UNVERIFIED)
   isActive          Boolean           @default(true)
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
+  institution           Institution?          @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+
   // Relationships
   eventsOrganized       Event[]               @relation("OrganizedEvents")
   organizerAssignments OrganizerAssignment[]
   registrations         Registration[]
+  activityRegistrations ActivityRegistration[]
   bookmarks             Bookmark[]
   notifications         Notification[]
   scannedTickets        Attendance[]
@@ -92,6 +148,7 @@ model User {
   @@index([role])
   @@index([affiliationStatus])
   @@index([isActive])
+  @@index([institutionId])
 }
 
 model OrganizerEntity {
@@ -134,7 +191,9 @@ model Event {
   description                  String          @db.Text
   category                     String
   department                   String
-  date                         DateTime
+  date                         DateTime        // Start date and time
+  endDate                      DateTime?       // End date and time
+  expiresAt                    DateTime?       // Expiration timestamp: 24h after endDate (or date)
   venue                        String
   totalSeats                   Int
   availableSeats               Int
@@ -142,10 +201,19 @@ model Event {
   status                       EventStatus     @default(APPROVED)
   isTrending                   Boolean         @default(false)
   requiresApproval             Boolean         @default(false)
-  deadline                     DateTime?
+  deadline                     DateTime?       // Registration closing deadline
   
-  // Event Classification & Eligibility
+  // Independent Registration Opening Dates
+  internalRegOpensAt           DateTime?       // When internal student registration opens
+  externalRegOpensAt           DateTime?       // When external college student registration opens
+
+  // Demo / Seed distinction
+  isDemo                       Boolean         @default(false)
+  
+  // Event Classification & Format
   eventType                    EventType       @default(INTRA_COLLEGE)
+  eventFormat                  EventFormat     @default(REGULAR)
+  numberOfDays                 Int?            @default(1)
   externalParticipationAllowed Boolean         @default(false)
   eligibleParticipants         String?         // Description of eligibility requirements
   contactPerson                String?
@@ -163,6 +231,7 @@ model Event {
 
   // Relationships
   registrations                Registration[]
+  activities                   SymposiumActivity[]
   bookmarks                    Bookmark[]
   attendances                  Attendance[]
   certificates                 Certificate[]
@@ -173,31 +242,36 @@ model Event {
   @@index([department])
   @@index([date])
   @@index([eventType])
+  @@index([eventFormat])
   @@index([organizerEntityId])
 }
 
 model Registration {
-  id                 Int                @id @default(autoincrement())
-  ticketId           String             @unique @default(uuid())
-  role               EventRole          @default(PARTICIPANT)
-  status             RegistrationStatus @default(PENDING)
-  attendance         AttendanceStatus   @default(PENDING)
-  certificateType    CertificateType    @default(NONE)
+  id                  Int                @id @default(autoincrement())
+  ticketId            String             @unique @default(uuid())
+  role                EventRole          @default(PARTICIPANT)
+  status              RegistrationStatus @default(PENDING)
+  attendance          AttendanceStatus   @default(PENDING)
+  certificateType     CertificateType    @default(NONE)
   
   // External participant details for Inter-College Events
-  participantCollege String?
-  institutionDetails String?
+  participantCollege  String?
+  participantState    String?
+  participantDistrict String?
+  institutionId       Int?
+  institutionDetails  String?
 
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
 
-  userId             Int
-  eventId            Int
+  userId              Int
+  eventId             Int
 
-  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  event              Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  attendanceLog      Attendance?
-  certificate        Certificate?
+  user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event               Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  institution         Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  attendanceLog       Attendance?
+  certificate         Certificate?
 
   // A user can only register once per event
   @@unique([userId, eventId])
@@ -205,6 +279,7 @@ model Registration {
   // High-performance lookup indexes
   @@index([userId])
   @@index([eventId])
+  @@index([institutionId])
 }
 
 model Bookmark {
@@ -258,4 +333,64 @@ model Certificate {
 
   @@index([userId])
   @@index([eventId])
+}
+
+model SymposiumActivity {
+  id                            Int                    @id @default(autoincrement())
+  eventId                       Int                    // Parent symposium
+  name                          String
+  description                   String?                @db.Text
+  category                      String                 @default("Technical") // e.g. Technical paper, Coding, Quiz, Cultural, Gaming, Workshop
+  dayNumber                     Int                    @default(1)
+  startTime                     DateTime
+  endTime                       DateTime
+  venue                         String
+  maxParticipants               Int
+  availableSeats                Int
+  
+  // Registration and Prerequisites
+  requiresSeparateRegistration  Boolean                @default(true)
+  requiresOverallRegistration   Boolean                @default(true) // Must have overall symposium registration
+  regOpensAt                    DateTime?
+  regClosesAt                   DateTime?
+  eligibilityRules              String?
+  fee                           Float                  @default(0.0) // 0 for free
+  orderIndex                    Int                    @default(0)
+  isActive                      Boolean                @default(true) // For cancellation/archival
+
+  createdAt                     DateTime               @default(now())
+  updatedAt                     DateTime               @updatedAt
+
+  event                         Event                  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  registrations                 ActivityRegistration[]
+
+  @@index([eventId])
+  @@index([startTime])
+  @@index([venue])
+}
+
+model ActivityRegistration {
+  id                  Int                @id @default(autoincrement())
+  ticketId            String             @unique @default(uuid())
+  activityId          Int
+  userId              Int
+  status              RegistrationStatus @default(APPROVED)
+  attendance          AttendanceStatus   @default(PENDING)
+  participantCollege  String?
+  participantState    String?
+  participantDistrict String?
+  institutionId       Int?
+  institutionDetails  String?
+
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  activity            SymposiumActivity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institution         Institution?       @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, activityId])
+  @@index([userId])
+  @@index([activityId])
+  @@index([institutionId])
 }

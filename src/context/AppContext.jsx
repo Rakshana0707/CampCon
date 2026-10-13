@@ -15,7 +15,29 @@ export function AppContextProvider({ children }) {
         }
     };
 
-    const [currentUser, setCurrentUser] = useState(() => safeJSONParse("campcon_current_user", null));
+    const normalizeCollegeName = (name) => {
+        if (!name || name === "Our College" || name === "CIT") {
+            return "Coimbatore Institute of Technology";
+        }
+        return name;
+    };
+
+    const normalizeUser = (user) => {
+        if (!user) return null;
+        return {
+            ...user,
+            role: user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase() : "Student",
+            collegeName: normalizeCollegeName(user.collegeName),
+            // Institution directory fields
+            institution: user.institution || null,
+            collegeState: user.collegeState || null,
+            collegeDistrict: user.collegeDistrict || null,
+            institutionId: user.institutionId || null,
+            affiliationStatus: user.affiliationStatus || "UNVERIFIED"
+        };
+    };
+
+    const [currentUser, setCurrentUser] = useState(() => normalizeUser(safeJSONParse("campcon_current_user", null)));
     
     // Core Data States
     const [events, setEvents] = useState([]);
@@ -63,13 +85,29 @@ export function AppContextProvider({ children }) {
                     organizingEntityName: e.organizerEntity?.name || e.department || "General",
                     organizerEntity: e.organizerEntity || null,
                     eventType: e.eventType || "INTRA_COLLEGE",
+                    eventFormat: e.eventFormat || "REGULAR",
+                    numberOfDays: e.numberOfDays || 1,
+                    activities: e.activities || [],
                     externalParticipationAllowed: e.externalParticipationAllowed || false,
                     eligibleParticipants: e.eligibleParticipants || "",
                     contactPerson: e.contactPerson || e.organizerEntity?.contactPerson || "",
                     contactEmail: e.contactEmail || e.organizerEntity?.contactEmail || "",
+                    rawDate: e.date,
+                    rawEndDate: e.endDate,
+                    rawDeadline: e.deadline,
+                    rawInternalRegOpensAt: e.internalRegOpensAt,
+                    rawExternalRegOpensAt: e.externalRegOpensAt,
+                    rawExpiresAt: e.expiresAt,
+                    isDemo: Boolean(e.isDemo),
                     date: e.date ? new Date(e.date).toISOString().split('T')[0] : "",
                     time: e.date ? new Date(e.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "",
-                    deadline: e.deadline ? new Date(e.deadline).toISOString().split('T')[0] : ""
+                    endDate: e.endDate ? new Date(e.endDate).toISOString().split('T')[0] : "",
+                    endTime: e.endDate ? new Date(e.endDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "",
+                    deadline: e.deadline ? new Date(e.deadline).toISOString().split('T')[0] : "",
+                    internalRegOpensAt: e.internalRegOpensAt ? new Date(e.internalRegOpensAt).toISOString().split('T')[0] : "",
+                    internalRegOpensTime: e.internalRegOpensAt ? new Date(e.internalRegOpensAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "",
+                    externalRegOpensAt: e.externalRegOpensAt ? new Date(e.externalRegOpensAt).toISOString().split('T')[0] : "",
+                    externalRegOpensTime: e.externalRegOpensAt ? new Date(e.externalRegOpensAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ""
                 }));
                 setEvents(mappedEvents);
             }
@@ -81,24 +119,49 @@ export function AppContextProvider({ children }) {
     };
 
     const fetchUsers = async () => {
-        if (!currentUser || currentUser.role !== "Admin") return;
-        try {
-            const res = await api.get("/admin/users");
-            if (res.data.success) {
-                // Map backend Prisma format to frontend compatibility layer
-                const mappedUsers = res.data.users.map(u => ({
-                    id: u.id,
-                    name: u.name,
-                    email: u.email,
-                    role: u.role.charAt(0).toUpperCase() + u.role.slice(1).toLowerCase(),
-                    department: u.department,
-                    year: u.year,
-                    rollNumber: u.rollNumber
-                }));
-                setUsers(mappedUsers);
+        if (!currentUser) return;
+        const role = currentUser.role?.toLowerCase();
+        if (role === "admin") {
+            try {
+                const res = await api.get("/admin/users");
+                if (res.data.success) {
+                    const mappedUsers = res.data.users.map(u => ({
+                        id: u.id,
+                        name: u.name,
+                        email: u.email,
+                        role: u.role.charAt(0).toUpperCase() + u.role.slice(1).toLowerCase(),
+                        department: u.department,
+                        year: u.year,
+                        rollNumber: u.rollNumber,
+                        collegeName: u.collegeName,
+                        affiliationStatus: u.affiliationStatus,
+                        isActive: u.isActive,
+                        organizerAssignments: u.organizerAssignments || []
+                    }));
+                    setUsers(mappedUsers);
+                }
+            } catch (error) {
+                console.error("Failed to fetch users:", error);
             }
-        } catch (error) {
-            console.error("Failed to fetch users:", error);
+        } else if (role === "organizer") {
+            try {
+                const res = await api.get("/registrations/students");
+                if (res.data.success) {
+                    const mappedStudents = res.data.students.map(u => ({
+                        id: u.id,
+                        name: u.name,
+                        email: u.email,
+                        role: "Student",
+                        department: u.department,
+                        rollNumber: u.rollNumber,
+                        collegeName: u.collegeName,
+                        affiliationStatus: u.affiliationStatus
+                    }));
+                    setUsers(mappedStudents);
+                }
+            } catch (error) {
+                console.error("Failed to fetch students for organizer:", error);
+            }
         }
     };
 
@@ -109,7 +172,7 @@ export function AppContextProvider({ children }) {
 
     // Toast Manager helper
     const showToast = (message, type = "success") => {
-        const id = Date.now();
+        const id = Date.now() + Math.random();
         setToasts((prev) => [...prev, { id, message, type }]);
         setTimeout(() => {
             setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -122,10 +185,11 @@ export function AppContextProvider({ children }) {
             const response = await api.post("/auth/login", { email, password });
             if (response.data.success) {
                 const { user, token } = response.data;
+                const normalized = normalizeUser(user);
                 localStorage.setItem("campcon_token", token);
-                setCurrentUser(user);
-                showToast(`Welcome back, ${user.name}!`, "success");
-                return { success: true, user };
+                setCurrentUser(normalized);
+                showToast(`Welcome back, ${normalized.name}!`, "success");
+                return { success: true, user: normalized };
             }
         } catch (error) {
             const errMsg = error.response?.data?.error || "Invalid credentials";
@@ -145,10 +209,11 @@ export function AppContextProvider({ children }) {
             const response = await api.post("/auth/register", userData);
             if (response.data.success) {
                 const { user, token } = response.data;
+                const normalized = normalizeUser(user);
                 localStorage.setItem("campcon_token", token);
-                setCurrentUser(user);
+                setCurrentUser(normalized);
                 showToast("Registration successful! Welcome aboard.", "success");
-                return { success: true, user };
+                return { success: true, user: normalized };
             }
         } catch (error) {
             const errMsg = error.response?.data?.error || "Registration failed";
@@ -211,6 +276,8 @@ export function AppContextProvider({ children }) {
         fetchNotifications();
     };
 
+    const [activityRegistrations, setActivityRegistrations] = useState([]);
+
     const fetchMyRegistrations = async () => {
         setIsLoading(true);
         try {
@@ -230,6 +297,10 @@ export function AppContextProvider({ children }) {
                     certificateType: r.certificateType.charAt(0).toUpperCase() + r.certificateType.slice(1).toLowerCase()
                 }));
                 setRegistrations(mappedRegs);
+
+                if (res.data.activityRegistrations) {
+                    setActivityRegistrations(res.data.activityRegistrations);
+                }
             }
         } catch (error) {
             console.error("Failed to fetch registrations:", error);
@@ -243,7 +314,11 @@ export function AppContextProvider({ children }) {
         try {
             if (!currentUser || !events) return;
             
-            const myEventIds = events.filter(e => e.organizerId === currentUser.id).map(e => e.id);
+            const isAdmin = currentUser.role?.toLowerCase() === 'admin';
+            const myEventIds = events
+                .filter(e => isAdmin || e.organizerId === currentUser.id)
+                .map(e => e.id);
+
             if (myEventIds.length === 0) {
                 setIsLoading(false);
                 return;
@@ -258,8 +333,10 @@ export function AppContextProvider({ children }) {
                         ticketId: r.ticketId,
                         studentId: r.userId,
                         eventId: r.eventId,
-                        studentName: r.user.name,
-                        studentEmail: r.user.email,
+                        studentName: r.user?.name || "Student",
+                        studentEmail: r.user?.email || "",
+                        studentRollNumber: r.user?.rollNumber || "",
+                        studentDepartment: r.user?.department || "",
                         role: r.role === 'VOLUNTEER' ? 'Volunteer' : 'Participant',
                         status: r.status.charAt(0).toUpperCase() + r.status.slice(1).toLowerCase(),
                         attendance: r.attendance === 'PRESENT' ? 'Present' : 'Pending',
@@ -279,9 +356,10 @@ export function AppContextProvider({ children }) {
     // Auto-fetch registrations when user logs in or events load
     useEffect(() => {
         if (!currentUser) return;
-        if (currentUser.role === 'Student') {
+        const role = currentUser.role?.toLowerCase();
+        if (role === 'student') {
             fetchMyRegistrations();
-        } else if (currentUser.role === 'Organizer' || currentUser.role === 'Admin') {
+        } else if (role === 'organizer' || role === 'admin') {
             fetchOrganizerRegistrations();
         }
     }, [currentUser, events]);
@@ -331,90 +409,50 @@ export function AppContextProvider({ children }) {
         }
     };
 
-    const approveRegistration = (regId) => {
-        const targetReg = registrations.find(r => r.id === regId);
-        if (!targetReg || targetReg.status === "Approved") return;
-        
-        const targetEvent = events.find(e => e.id === targetReg.eventId);
-        
-        if (targetEvent && targetEvent.seats <= 0) {
-            showToast("Cannot approve: Event is at full capacity!", "danger");
-            return;
-        }
-
-        setRegistrations((prev) =>
-            prev.map((r) => r.id === regId ? { ...r, status: "Approved" } : r)
-        );
-
-        setEvents((prev) =>
-            prev.map((evt) =>
-                evt.id === targetReg.eventId ? { ...evt, seats: Math.max(0, evt.seats - 1) } : evt
-            )
-        );
-
-        addNotification(`Registration for ${targetEvent?.title || 'Event'} approved!`, targetReg.studentId);
-        showToast("Registration approved successfully!", "success");
-    };
-
-    const rejectRegistration = (regId) => {
-        const targetReg = registrations.find(r => r.id === regId);
-        if (!targetReg) return;
-        
-        const wasApproved = targetReg.status === "Approved";
-
-        setRegistrations((prev) =>
-            prev.map((r) => r.id === regId ? { ...r, status: "Rejected" } : r)
-        );
-
-        if (wasApproved) {
-            setEvents((prev) => 
-                prev.map(evt => evt.id === targetReg.eventId ? { ...evt, seats: evt.seats + 1 } : evt)
-            );
-        }
-
-        const targetEvent = events.find(e => e.id === targetReg.eventId);
-        addNotification(`Registration for ${targetEvent?.title || 'Event'} rejected.`, targetReg.studentId);
-        showToast("Registration rejected", "warning");
-    };
-
-    const assignVolunteer = (eventId, studentId) => {
-        const targetEvent = events.find(e => e.id === eventId);
-        if (!targetEvent) return false;
-
-        const alreadyRegistered = registrations.some(
-            (r) => r.studentId === studentId && r.eventId === eventId && r.status !== "Cancelled" && r.status !== "Rejected"
-        );
-        
-        if (alreadyRegistered) {
-            showToast("Student is already registered for this event", "warning");
+    const approveRegistration = async (regId) => {
+        try {
+            const res = await api.patch(`/registrations/${regId}/status`, { status: "APPROVED" });
+            if (res.data.success) {
+                await fetchEvents();
+                await fetchOrganizerRegistrations();
+                showToast("Registration approved successfully!", "success");
+                return true;
+            }
+        } catch (error) {
+            showToast(error.response?.data?.error || "Failed to approve registration", "danger");
             return false;
         }
+    };
 
-        if (targetEvent.seats <= 0) {
-            showToast("Cannot assign volunteer: Event is at full capacity!", "danger");
+    const rejectRegistration = async (regId) => {
+        try {
+            const res = await api.patch(`/registrations/${regId}/status`, { status: "REJECTED" });
+            if (res.data.success) {
+                await fetchEvents();
+                await fetchOrganizerRegistrations();
+                showToast("Registration rejected", "warning");
+                return true;
+            }
+        } catch (error) {
+            showToast(error.response?.data?.error || "Failed to reject registration", "danger");
             return false;
         }
+    };
 
-        const newReg = {
-            id: registrations.length ? Math.max(...registrations.map((r) => r.id)) + 1 : 1,
-            studentId: studentId,
-            eventId: eventId,
-            role: "Volunteer",
-            status: "Approved",
-            attendance: "Pending",
-            certificateType: "Volunteer"
-        };
-        
-        setRegistrations((prev) => [...prev, newReg]);
-        
-        setEvents((prev) =>
-            prev.map((evt) =>
-                evt.id === eventId ? { ...evt, seats: Math.max(0, evt.seats - 1) } : evt
-            )
-        );
-
-        showToast("Volunteer assigned successfully!", "success");
-        return true;
+    const assignVolunteer = async (eventId, studentId) => {
+        try {
+            const res = await api.post("/registrations/volunteer", { eventId, studentId });
+            if (res.data.success) {
+                await fetchEvents();
+                await fetchOrganizerRegistrations();
+                showToast("Volunteer assigned successfully!", "success");
+                return true;
+            }
+            return false;
+        } catch (error) {
+            showToast(error.response?.data?.error || "Failed to assign volunteer", "danger");
+            return false;
+        }
     };
 
     const markAttendance = async (ticketId) => {
@@ -437,11 +475,25 @@ export function AppContextProvider({ children }) {
     const createEvent = async (eventData) => {
         try {
             const combinedDate = eventData.time ? `${eventData.date} ${eventData.time}` : eventData.date;
+            const combinedEndDate = eventData.endDate ? 
+                (eventData.endTime ? `${eventData.endDate} ${eventData.endTime}` : eventData.endDate) : 
+                combinedDate;
+
+            const combinedInternalOpens = eventData.internalRegOpensAt ? 
+                (eventData.internalRegOpensTime ? `${eventData.internalRegOpensAt} ${eventData.internalRegOpensTime}` : eventData.internalRegOpensAt) :
+                undefined;
+
+            const combinedExternalOpens = eventData.externalRegOpensAt ? 
+                (eventData.externalRegOpensTime ? `${eventData.externalRegOpensAt} ${eventData.externalRegOpensTime}` : eventData.externalRegOpensAt) :
+                undefined;
 
             const payload = {
                 ...eventData,
                 date: combinedDate,
+                endDate: combinedEndDate,
                 deadline: eventData.deadline || eventData.date,
+                internalRegOpensAt: combinedInternalOpens,
+                externalRegOpensAt: combinedExternalOpens,
                 totalSeats: parseInt(eventData.seats, 10),
             };
 
@@ -461,11 +513,25 @@ export function AppContextProvider({ children }) {
     const updateEvent = async (eventId, eventData) => {
         try {
             const combinedDate = eventData.time ? `${eventData.date} ${eventData.time}` : eventData.date;
+            const combinedEndDate = eventData.endDate ? 
+                (eventData.endTime ? `${eventData.endDate} ${eventData.endTime}` : eventData.endDate) : 
+                combinedDate;
+
+            const combinedInternalOpens = eventData.internalRegOpensAt ? 
+                (eventData.internalRegOpensTime ? `${eventData.internalRegOpensAt} ${eventData.internalRegOpensTime}` : eventData.internalRegOpensAt) :
+                undefined;
+
+            const combinedExternalOpens = eventData.externalRegOpensAt ? 
+                (eventData.externalRegOpensTime ? `${eventData.externalRegOpensAt} ${eventData.externalRegOpensTime}` : eventData.externalRegOpensAt) :
+                undefined;
 
             const payload = {
                 ...eventData,
                 date: combinedDate,
+                endDate: combinedEndDate,
                 deadline: eventData.deadline || eventData.date,
+                internalRegOpensAt: combinedInternalOpens,
+                externalRegOpensAt: combinedExternalOpens,
                 totalSeats: parseInt(eventData.seats, 10),
             };
 
@@ -541,6 +607,96 @@ export function AppContextProvider({ children }) {
         }
     };
 
+    // Symposium Activity Actions
+    const addSymposiumActivity = async (symposiumId, activityData) => {
+        try {
+            const res = await api.post(`/events/${symposiumId}/activities`, activityData);
+            if (res.data.success) {
+                await fetchEvents();
+                showToast("Activity added successfully!", "success");
+                return res.data.activity;
+            }
+        } catch (error) {
+            showToast(error.response?.data?.error || "Failed to add activity", "danger");
+            return null;
+        }
+    };
+
+    const updateSymposiumActivity = async (activityId, activityData) => {
+        try {
+            const res = await api.put(`/activities/${activityId}`, activityData);
+            if (res.data.success) {
+                await fetchEvents();
+                showToast("Activity updated successfully!", "success");
+                return res.data.activity;
+            }
+        } catch (error) {
+            showToast(error.response?.data?.error || "Failed to update activity", "danger");
+            return null;
+        }
+    };
+
+    const removeSymposiumActivity = async (activityId) => {
+        try {
+            const res = await api.delete(`/activities/${activityId}`);
+            if (res.data.success) {
+                await fetchEvents();
+                showToast(res.data.message || "Activity removed", "info");
+                return true;
+            }
+        } catch (error) {
+            showToast(error.response?.data?.error || "Failed to remove activity", "danger");
+            return false;
+        }
+    };
+
+    const registerForActivity = async (activityId, extraData = {}) => {
+        try {
+            const res = await api.post(`/activities/${activityId}/register`, extraData);
+            if (res.data.success) {
+                await fetchEvents();
+                if (currentUser?.role?.toLowerCase() === 'student') {
+                    await fetchMyRegistrations();
+                }
+                showToast(res.data.message || "Successfully registered for activity!", "success");
+                return res.data.registration;
+            }
+        } catch (error) {
+            showToast(error.response?.data?.error || "Failed to register for activity", "danger");
+            return null;
+        }
+    };
+
+    const cancelActivityRegistration = async (activityId) => {
+        try {
+            const res = await api.delete(`/activities/${activityId}/register`);
+            if (res.data.success) {
+                await fetchEvents();
+                if (currentUser?.role?.toLowerCase() === 'student') {
+                    await fetchMyRegistrations();
+                }
+                showToast(res.data.message || "Activity registration cancelled", "info");
+                return true;
+            }
+        } catch (error) {
+            showToast(error.response?.data?.error || "Failed to cancel activity registration", "danger");
+            return false;
+        }
+    };
+
+    const getActivityRegistrations = async (activityId) => {
+        try {
+            const res = await api.get(`/activities/${activityId}/registrations`);
+            if (res.data.success) {
+                return res.data.registrations;
+            }
+            return [];
+        } catch (error) {
+            showToast(error.response?.data?.error || "Failed to load activity registrations", "danger");
+            return [];
+        }
+    };
+
     return (
         <AppContext.Provider
             value={{
@@ -560,6 +716,12 @@ export function AppContextProvider({ children }) {
                 updateEvent,
                 deleteEvent,
                 updateEventStatus,
+                addSymposiumActivity,
+                updateSymposiumActivity,
+                removeSymposiumActivity,
+                registerForActivity,
+                cancelActivityRegistration,
+                getActivityRegistrations,
                 deleteUser,
                 changeUserRole,
                 addNotification,
@@ -568,6 +730,8 @@ export function AppContextProvider({ children }) {
                 toggleSaveEvent,
                 registrations,
                 setRegistrations,
+                activityRegistrations,
+                fetchMyRegistrations,
                 approveRegistration,
                 rejectRegistration,
                 assignVolunteer,

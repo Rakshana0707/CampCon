@@ -52,33 +52,33 @@ function Organizers() {
     return (
         <div className="container py-5" style={{ minHeight: "85vh" }}>
             <div className="text-center mb-5">
-                <span className="text-primary fw-bold text-uppercase tracking-wider fs-7">
-                    Official College Directory
+                <span className="editorial-meta-tag">
+                    Institutional Index & Directory
                 </span>
-                <h1 className="fw-extrabold text-white mt-1" style={{ fontSize: "2.6rem" }}>
-                    Verified Organizers & Academic Units
+                <h1 className="serif-heading mt-1" style={{ fontSize: "2.8rem" }}>
+                    Verified Organizations & Academic Units
                 </h1>
-                <p className="text-muted max-width-600 mx-auto">
-                    Browse all official academic programmes, departments, and approved student clubs authorized to host events on CampusConnect.
+                <p className="text-muted max-width-600 mx-auto fs-7">
+                    Browse official academic departments, research centres, and accredited student societies empowered to publish official symposiums.
                 </p>
             </div>
 
             {/* Type Filter Pills */}
             <div className="d-flex justify-content-center gap-2 mb-4 flex-wrap">
                 <button
-                    className={`btn px-4 py-2 rounded-pill fw-semibold ${typeFilter === "ALL" ? "btn-primary" : "btn-outline-secondary text-light"}`}
+                    className={`btn px-4 py-2 rounded-pill fw-semibold fs-8 ${typeFilter === "ALL" ? "btn-editorial-primary" : "btn-editorial-secondary"}`}
                     onClick={() => { setTypeFilter("ALL"); setCategoryFilter("ALL"); }}
                 >
                     All Entities ({organizers.length})
                 </button>
                 <button
-                    className={`btn px-4 py-2 rounded-pill fw-semibold ${typeFilter === "DEPARTMENT" ? "btn-primary" : "btn-outline-secondary text-light"}`}
+                    className={`btn px-4 py-2 rounded-pill fw-semibold fs-8 ${typeFilter === "DEPARTMENT" ? "btn-editorial-primary" : "btn-editorial-secondary"}`}
                     onClick={() => { setTypeFilter("DEPARTMENT"); setCategoryFilter("ALL"); }}
                 >
-                    🏛️ Academic Departments & Programmes (16)
+                    🏛️ Academic Departments (16)
                 </button>
                 <button
-                    className={`btn px-4 py-2 rounded-pill fw-semibold ${typeFilter === "CLUB" ? "btn-info text-dark" : "btn-outline-secondary text-light"}`}
+                    className={`btn px-4 py-2 rounded-pill fw-semibold fs-8 ${typeFilter === "CLUB" ? "btn-editorial-primary" : "btn-editorial-secondary"}`}
                     onClick={() => { setTypeFilter("CLUB"); setCategoryFilter("ALL"); }}
                 >
                     🚩 Approved Clubs & Cells (31)

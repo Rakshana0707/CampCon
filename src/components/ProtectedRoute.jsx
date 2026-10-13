@@ -11,11 +11,13 @@ function ProtectedRoute({ allowedRoles = [] }) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    if (allowedRoles.length > 0 && !allowedRoles.includes(currentUser.role)) {
+    const userRole = currentUser.role?.toLowerCase();
+    const normalizedAllowed = allowedRoles.map(r => r.toLowerCase());
+
+    if (normalizedAllowed.length > 0 && !normalizedAllowed.includes(userRole)) {
         // Redirect to their native dashboard if role isn't authorized
-        const role = currentUser.role.toLowerCase();
-        if (role === "admin") return <Navigate to="/admin" replace />;
-        if (role === "organizer") return <Navigate to="/organizer" replace />;
+        if (userRole === "admin") return <Navigate to="/admin" replace />;
+        if (userRole === "organizer") return <Navigate to="/organizer" replace />;
         return <Navigate to="/student" replace />;
     }
 

@@ -2,6 +2,7 @@ import { useState, useContext, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import { FaUser, FaEnvelope, FaLock, FaBuilding, FaChevronRight, FaArrowLeft } from "react-icons/fa";
+import DistrictCollegeSelector from "../components/DistrictCollegeSelector";
 
 function Register() {
     const { registerUser, currentUser } = useContext(AppContext);
@@ -15,10 +16,21 @@ function Register() {
         department: "",
         rollNumber: "",
         year: "I Year",
-        role: "Student"
+        role: "Student",
+        collegeName: "Coimbatore Institute of Technology"
     });
-    
+
+    // External institution selection state (managed by DistrictCollegeSelector)
+    const [externalInstitution, setExternalInstitution] = useState({
+        state: "",
+        district: "",
+        institutionId: "",
+        collegeName: ""
+    });
+
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const isExternal = form.collegeName === "External College";
 
     // Redirect if already logged in
     useEffect(() => {
@@ -36,19 +48,52 @@ function Register() {
     }, [currentUser, navigate, location]);
 
     const handleChange = (e) => {
-        setForm({
-            ...form,
-            [e.target.name]: e.target.value
-        });
+        const { name, value } = e.target;
+        setForm(prev => ({
+            ...prev,
+            [name]: value,
+            // Reset external institution when switching affiliation
+            ...(name === "collegeName" ? {} : {})
+        }));
+
+        // Clear external institution when switching back to internal
+        if (name === "collegeName" && value !== "External College") {
+            setExternalInstitution({ state: "", district: "", institutionId: "", collegeName: "" });
+        }
     };
+
+    // Validation: external students must have a valid institutionId selected
+    const isExternalValid = !isExternal || (
+        externalInstitution.institutionId &&
+        externalInstitution.state &&
+        externalInstitution.district
+    );
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (isExternal && !externalInstitution.institutionId) {
+            alert("Please select your institution from the directory.");
+            return;
+        }
+
         setIsSubmitting(true);
-        const submissionData = {
-            ...form,
-            collegeName: form.collegeName === "External College" ? (form.customCollegeName || "External College") : "Our College"
-        };
+
+        const submissionData = isExternal
+            ? {
+                ...form,
+                collegeName: externalInstitution.collegeName,
+                affiliationType: "EXTERNAL",
+                collegeState: externalInstitution.state,
+                collegeDistrict: externalInstitution.district,
+                institutionId: parseInt(externalInstitution.institutionId, 10)
+            }
+            : {
+                ...form,
+                collegeName: "Coimbatore Institute of Technology",
+                affiliationType: "INTERNAL"
+            };
+
         const res = await registerUser(submissionData);
         if (res.success) {
             if (res.user.status === "Pending") {
@@ -70,24 +115,27 @@ function Register() {
     };
 
     return (
-        <div className="auth-page">
+        <div className="py-5" style={{ minHeight: "85vh", backgroundColor: "var(--bg-primary)" }}>
             <div className="container">
                 {/* Back to Home Button */}
                 <div className="mb-4 text-center">
-                    <Link to="/" className="btn btn-outline-light btn-sm d-inline-flex align-items-center gap-2">
-                        <FaArrowLeft /> Back to Home
+                    <Link to="/" className="btn btn-editorial-secondary btn-sm d-inline-flex align-items-center gap-2">
+                        <FaArrowLeft size={11} /> Back to Front Page
                     </Link>
                 </div>
 
                 <div className="row justify-content-center">
-                    <div className="col-lg-6">
-                        <div className="auth-card glass-panel shadow-lg">
-                            <h2 className="text-center fw-bold text-white mb-2" style={{ fontFamily: "var(--font-heading)" }}>
-                                Create Account 🚀
-                            </h2>
-                            <p className="text-center text-muted mb-4">
-                                Join CampusConnect to organize or attend events
-                            </p>
+                    <div className="col-lg-7">
+                        <div className="editorial-panel p-4 p-md-5 shadow-sm">
+                            <div className="text-center mb-4">
+                                <span className="editorial-meta-tag mb-1">New Membership</span>
+                                <h2 className="serif-heading mb-1" style={{ fontSize: "2.1rem" }}>
+                                    Join the Campus Journal
+                                </h2>
+                                <p className="text-muted fs-8 mb-0">
+                                    Register as a verified student to enroll in symposiums and hackathons
+                                </p>
+                            </div>
 
                             <form onSubmit={handleSubmit}>
                                 <div className="row">
@@ -193,37 +241,35 @@ function Register() {
                                             id="regCollege"
                                             className="form-select bg-dark text-white border-secondary"
                                             name="collegeName"
-                                            value={form.collegeName || "Our College"}
+                                            value={form.collegeName}
                                             onChange={handleChange}
                                             disabled={isSubmitting}
                                         >
-                                            <option value="Our College">Our College (Internal Student)</option>
+                                            <option value="Coimbatore Institute of Technology">Coimbatore Institute of Technology (Internal Student)</option>
                                             <option value="External College">External College / Other Institution</option>
                                         </select>
                                         <small className="text-muted fs-9 d-block mt-1">
-                                            {form.collegeName === "External College" ? "Eligible for all open Inter-College events." : "Institutional email or admin verification grants Intra-College access."}
+                                            {isExternal
+                                                ? "Eligible for all open Inter-College events."
+                                                : "Institutional email or admin verification grants Intra-College access."}
                                         </small>
                                     </div>
                                 </div>
 
-                                {form.collegeName === "External College" && (
+                                {/* External institution cascading selector */}
+                                {isExternal && (
                                     <div className="mb-3">
-                                        <label htmlFor="regExtName" className="text-white form-label fw-medium">External Institution / College Name <span className="text-danger">*</span></label>
-                                        <div className="input-group">
-                                            <span className="input-group-text bg-dark border-secondary text-muted">
-                                                <FaBuilding />
-                                            </span>
-                                            <input
-                                                id="regExtName"
-                                                className="form-control"
-                                                placeholder="e.g. Coimbatore Institute of Technology"
-                                                name="customCollegeName"
-                                                value={form.customCollegeName || ""}
-                                                onChange={(e) => setForm({ ...form, customCollegeName: e.target.value })}
-                                                disabled={isSubmitting}
-                                                required
-                                            />
-                                        </div>
+                                        <DistrictCollegeSelector
+                                            value={externalInstitution}
+                                            onChange={setExternalInstitution}
+                                            disabled={isSubmitting}
+                                            userEmail={form.email}
+                                        />
+                                        {isExternal && !externalInstitution.institutionId && (
+                                            <div className="alert alert-warning border border-warning border-opacity-30 bg-warning bg-opacity-10 text-warning py-2 px-3 mt-2 rounded-3 fs-8">
+                                                ⚠️ Please select your state, district, and institution to continue.
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
@@ -271,16 +317,10 @@ function Register() {
                                     </div>
                                 </div>
 
-                                {form.role === "Organizer" && (
-                                    <div className="alert alert-warning border border-warning border-opacity-30 bg-warning bg-opacity-10 text-warning text-center fs-7 py-3 mb-4 rounded-3">
-                                        <strong>Notice:</strong> Your account will need to be approved by the college Administrator before you can access organizer tools.
-                                    </div>
-                                )}
-
-                                <button 
+                                <button
                                     className="btn btn-success w-100 py-3 fw-bold fs-6 d-flex align-items-center justify-content-center gap-2"
                                     type="submit"
-                                    disabled={isSubmitting}
+                                    disabled={isSubmitting || !isExternalValid}
                                 >
                                     {isSubmitting ? (
                                         <>
