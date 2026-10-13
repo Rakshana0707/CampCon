@@ -218,6 +218,7 @@ function Register() {
                                             <option value="II Year">II Year</option>
                                             <option value="III Year">III Year</option>
                                             <option value="IV Year">IV Year</option>
+                                            <option value="V Year">V Year (Integrated M.Sc.)</option>
                                             <option value="Staff">Staff / Faculty</option>
                                         </select>
                                     </div>
