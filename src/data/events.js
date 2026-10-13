@@ -628,6 +628,196 @@ const events = [
             "Free API keys and cloud notebook environments provided during morning session."
         ],
         activities: []
+    },
+
+    // =========================================================================
+    // 9. INTRA-COLLEGE TECHNICAL EVENT: CIT Intra-Hackathon: Campus Solve '26 (CSE)
+    // Exclusively for CIT campus students
+    // =========================================================================
+    {
+        id: 9,
+        title: "Campus Solve '26: CIT Intra-Department 12-Hour Hackathon",
+        category: "Technical",
+        eventFormat: "REGULAR",
+        eventType: "INTRA_COLLEGE",
+        numberOfDays: 1,
+        date: "2026-11-25",
+        time: "08:30 AM",
+        endDate: "2026-11-25",
+        endTime: "08:30 PM",
+        deadline: "2026-11-23",
+        venue: "Central Computing Center (CCC), Block A",
+        seats: 180,
+        totalSeats: 180,
+        availableSeats: 180,
+        organizer: "Prof. S. Anand",
+        organizerEmail: "cse.organizer@college.edu",
+        organizingEntityName: "B.E. Computer Science and Engineering",
+        department: "B.E. Computer Science and Engineering",
+        organizerEntity: {
+            id: 10,
+            name: "B.E. Computer Science and Engineering",
+            type: "DEPARTMENT",
+            category: "Undergraduate Programmes",
+            description: "Department of CSE driving innovations in software engineering, computing, and cybersecurity."
+        },
+        image: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80",
+        trending: true,
+        description: "An intensive intra-college internal hackathon challenging CIT student teams across all departments to develop smart campus web applications, canteen queuing optimizers, and automated hostel pass systems.",
+        coordinatorName: "Prof. S. Anand",
+        coordinatorContact: "+91 98421 20261",
+        prizeDetails: "Cash Prizes ₹25,000 + Incubation Support in CIT Innovation Cell",
+        requiresApproval: false,
+        externalParticipationAllowed: false,
+        eligibleParticipants: "Coimbatore Institute of Technology Students Only (All Batches & Branches)",
+        rules: [
+            "Teams can consist of 2 to 4 students from any branch of CIT.",
+            "Projects must solve one of 5 announced campus operational pain points.",
+            "College Wi-Fi access, dinner, and caffeine rations provided at the center."
+        ],
+        activities: []
+    },
+
+    // =========================================================================
+    // 10. INTRA-COLLEGE CULTURAL EVENT: RhythmScape '26 – Inter-Year Western & Classical Battle (Music Club)
+    // Intra-college music contest
+    // =========================================================================
+    {
+        id: 10,
+        title: "RhythmScape '26: CIT Inter-Batch Unplugged Jam & Band Battle",
+        category: "Cultural",
+        eventFormat: "REGULAR",
+        eventType: "INTRA_COLLEGE",
+        numberOfDays: 1,
+        date: "2026-12-02",
+        time: "04:30 PM",
+        endDate: "2026-12-02",
+        endTime: "09:00 PM",
+        deadline: "2026-11-30",
+        venue: "Open Air Amphitheatre & Music Room",
+        seats: 300,
+        totalSeats: 300,
+        availableSeats: 300,
+        organizer: "Karthik R",
+        organizerEmail: "music.organizer@college.edu",
+        organizingEntityName: "Music Club",
+        department: "Music Club",
+        organizerEntity: {
+            id: 21,
+            name: "Music Club",
+            type: "CLUB",
+            category: "Cultural & Arts",
+            description: "Campus melodies, classical, acoustic, and contemporary musical performances."
+        },
+        image: "https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&w=800&q=80",
+        trending: false,
+        description: "Annual internal campus music battle pitting 1st, 2nd, 3rd, and final year student bands against each other in genres including Carnatic fusion, indie rock, cinematic mashups, and percussion solo battles.",
+        coordinatorName: "Karthik R",
+        coordinatorContact: "+91 97890 43210",
+        prizeDetails: "Rolling Shield 'CIT Voice of the Year' + ₹15,000",
+        requiresApproval: false,
+        externalParticipationAllowed: false,
+        eligibleParticipants: "Coimbatore Institute of Technology Students Only",
+        rules: [
+            "Each year/batch can field up to 2 vocalists and 1 band unit.",
+            "Acoustic instruments and standard drum kit provided on stage.",
+            "Maximum stage time per act: 8 minutes including sound check."
+        ],
+        activities: []
+    },
+
+    // =========================================================================
+    // 11. INTRA-COLLEGE TECHNICAL EVENT: CircuitQuest '26 – Internal Hardware Debugging (EEE)
+    // =========================================================================
+    {
+        id: 11,
+        title: "CircuitQuest '26: Speed Breadboarding & IoT Circuit Race",
+        category: "Technical",
+        eventFormat: "REGULAR",
+        eventType: "INTRA_COLLEGE",
+        numberOfDays: 1,
+        date: "2026-12-08",
+        time: "02:00 PM",
+        endDate: "2026-12-08",
+        endTime: "05:30 PM",
+        deadline: "2026-12-06",
+        venue: "EEE Microcontroller & Embedded Systems Lab",
+        seats: 100,
+        totalSeats: 100,
+        availableSeats: 100,
+        organizer: "Dr. V. Narayanan",
+        organizerEmail: "eee.organizer@college.edu",
+        organizingEntityName: "B.E. Electrical and Electronics Engineering",
+        department: "B.E. Electrical and Electronics Engineering",
+        organizerEntity: {
+            id: 11,
+            name: "B.E. Electrical and Electronics Engineering",
+            type: "DEPARTMENT",
+            category: "Undergraduate Programmes",
+            description: "Department of EEE excelling in power systems, renewable energy, and control engineering."
+        },
+        image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80",
+        trending: false,
+        description: "Hands-on intra-college embedded engineering competition where student pairs race against the clock to wire sensor networks on breadboards, eliminate IC bugs, and transmit real-time telemetry over ESP32 Wi-Fi.",
+        coordinatorName: "Dr. V. Narayanan",
+        coordinatorContact: "+91 94431 88921",
+        prizeDetails: "Arduino & ESP32 Pro Starter Kits + ₹8,000",
+        requiresApproval: false,
+        externalParticipationAllowed: false,
+        eligibleParticipants: "Coimbatore Institute of Technology Students Only (EEE, ECE, Mech, Mechatronics, CSE)",
+        rules: [
+            "Teams of 2 students.",
+            "All components (ICs, resistors, jumper cables, multimeters) provided at workstations.",
+            "Judging based on logic accuracy, solderless neatness, and completion timestamp."
+        ],
+        activities: []
+    },
+
+    // =========================================================================
+    // 12. INTRA-COLLEGE CULTURAL & DRAMA: Curtains Up '26 – Street Theatre & Mime Fest (Dramatix)
+    // =========================================================================
+    {
+        id: 12,
+        title: "Curtains Up '26: CIT Inter-Department Street Play & Mime Conclave",
+        category: "Cultural",
+        eventFormat: "REGULAR",
+        eventType: "INTRA_COLLEGE",
+        numberOfDays: 1,
+        date: "2026-12-14",
+        time: "03:30 PM",
+        endDate: "2026-12-14",
+        endTime: "07:30 PM",
+        deadline: "2026-12-12",
+        venue: "CIT Quadrangle & Open Stage",
+        seats: 250,
+        totalSeats: 250,
+        availableSeats: 250,
+        organizer: "Sanjana V",
+        organizerEmail: "dramatix.organizer@college.edu",
+        organizingEntityName: "Dramatix",
+        department: "Dramatix",
+        organizerEntity: {
+            id: 22,
+            name: "Dramatix",
+            type: "CLUB",
+            category: "Cultural & Arts",
+            description: "The premier theater, street play, and theatrical performance group."
+        },
+        image: "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=800&q=80",
+        trending: false,
+        description: "High-energy intra-college street theatre showcase bringing student troupes together in the central quad to perform original sketches, satirical campus spoofs, social awareness nukkad natak, and synchronized mime acts.",
+        coordinatorName: "Sanjana V",
+        coordinatorContact: "+91 96555 12345",
+        prizeDetails: "Best Play Trophy + Cash Prizes ₹12,000",
+        requiresApproval: false,
+        externalParticipationAllowed: false,
+        eligibleParticipants: "Coimbatore Institute of Technology Students Only",
+        rules: [
+            "Team size: 6 to 12 performers per department or club team.",
+            "Performance duration: 10 to 12 minutes.",
+            "Live dholak / acoustic beats permitted; electronic amplification strictly optional."
+        ],
+        activities: []
     }
 ];
 
