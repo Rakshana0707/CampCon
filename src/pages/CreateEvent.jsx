@@ -601,8 +601,8 @@ function CreateEvent() {
                             </div>
 
                             {/* Timeline & Schedule */}
-                            <div className="card bg-white bg-opacity-5 border border-white border-opacity-10 p-3 mb-4 rounded-3">
-                                <h6 className="text-white fw-bold mb-3 d-flex align-items-center gap-2">
+                            <div className="glass-panel p-3 mb-4 rounded-3 border">
+                                <h6 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: "var(--text-main)" }}>
                                     <i className="bi bi-calendar-event text-primary"></i> Event Schedule & Automatic Expiration
                                 </h6>
                                 <div className="row">
@@ -685,8 +685,8 @@ function CreateEvent() {
                             </div>
 
                             {/* Registration Scheduling & Capacity */}
-                            <div className="card bg-white bg-opacity-5 border border-white border-opacity-10 p-3 mb-4 rounded-3">
-                                <h6 className="text-white fw-bold mb-3 d-flex align-items-center gap-2">
+                            <div className="glass-panel p-3 mb-4 rounded-3 border">
+                                <h6 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: "var(--text-main)" }}>
                                     <i className="bi bi-clock-history text-info"></i> Registration Scheduling & Capacity
                                 </h6>
                                 <div className="row">

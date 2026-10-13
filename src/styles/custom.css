@@ -550,33 +550,45 @@
 }
 
 /* Light mode overrides for Bootstrap utility classes */
-[data-theme="light"] .bg-dark,
-:root:not(.dark) .bg-dark {
+html[data-theme="light"] .bg-dark,
+[data-theme="light"] .bg-dark {
     background-color: #F8F6FD !important;
     color: #1D1135 !important;
 }
 
-[data-theme="light"] .text-white,
-:root:not(.dark) .text-white {
+html[data-theme="light"] .text-white,
+[data-theme="light"] .text-white {
     color: #1D1135 !important;
 }
 
-[data-theme="light"] .text-light,
-:root:not(.dark) .text-light {
+html[data-theme="light"] .text-light,
+[data-theme="light"] .text-light {
     color: #1D1135 !important;
 }
 
-[data-theme="light"] .border-secondary,
-:root:not(.dark) .border-secondary {
+html[data-theme="light"] .border-secondary,
+[data-theme="light"] .border-secondary {
     border-color: #EBE5F7 !important;
 }
 
-[data-theme="light"] .text-muted,
-:root:not(.dark) .text-muted {
+html[data-theme="light"] .text-muted,
+[data-theme="light"] .text-muted {
     color: #5D4E75 !important;
 }
 
 /* Preserve crisp white text inside colored accent buttons & badges in light mode */
+html[data-theme="light"] .btn-primary,
+html[data-theme="light"] .btn-primary *,
+html[data-theme="light"] .btn-editorial-primary,
+html[data-theme="light"] .btn-editorial-primary *,
+html[data-theme="light"] .badge.bg-primary,
+html[data-theme="light"] .badge.bg-success,
+html[data-theme="light"] .badge.bg-danger,
+html[data-theme="light"] .filter-pill.active,
+html[data-theme="light"] .ticket-header,
+html[data-theme="light"] .ticket-header *,
+html[data-theme="light"] .featured-magazine-box .btn-editorial-primary,
+html[data-theme="light"] .badge-inter,
 [data-theme="light"] .btn-primary,
 [data-theme="light"] .btn-primary *,
 [data-theme="light"] .btn-editorial-primary,
@@ -588,59 +600,79 @@
 [data-theme="light"] .ticket-header,
 [data-theme="light"] .ticket-header *,
 [data-theme="light"] .featured-magazine-box .btn-editorial-primary,
-[data-theme="light"] .badge-inter,
-:root:not(.dark) .btn-primary,
-:root:not(.dark) .btn-primary *,
-:root:not(.dark) .btn-editorial-primary,
-:root:not(.dark) .btn-editorial-primary *,
-:root:not(.dark) .ticket-header,
-:root:not(.dark) .ticket-header * {
+[data-theme="light"] .badge-inter {
     color: #FFFFFF !important;
 }
 
-[data-theme="light"] .modal-content,
-:root:not(.dark) .modal-content {
+html[data-theme="light"] .modal-content,
+[data-theme="light"] .modal-content {
     background-color: #FFFFFF !important;
     color: #1D1135 !important;
     border-color: #EBE5F7 !important;
 }
 
 /* Light mode overrides for form background containers, cards, and input fields */
-[data-theme="light"] .card.bg-white.bg-opacity-5,
-:root:not(.dark) .card.bg-white.bg-opacity-5 {
+html[data-theme="light"] .card.bg-white.bg-opacity-5,
+[data-theme="light"] .card.bg-white.bg-opacity-5 {
     background-color: #FAF8FE !important;
     border-color: #EBE5F7 !important;
 }
 
-[data-theme="light"] .form-label,
-:root:not(.dark) .form-label {
+html[data-theme="light"] .form-label,
+[data-theme="light"] .form-label {
     color: #1D1135 !important;
 }
 
+html[data-theme="light"] .form-control,
+html[data-theme="light"] .form-select,
 [data-theme="light"] .form-control,
-[data-theme="light"] .form-select,
-:root:not(.dark) .form-control,
-:root:not(.dark) .form-select {
+[data-theme="light"] .form-select {
     background-color: #FFFFFF !important;
     color: #1D1135 !important;
     border-color: #D4C7EE !important;
 }
 
+html[data-theme="light"] .form-control:focus,
+html[data-theme="light"] .form-select:focus,
 [data-theme="light"] .form-control:focus,
-[data-theme="light"] .form-select:focus,
-:root:not(.dark) .form-control:focus,
-:root:not(.dark) .form-select:focus {
+[data-theme="light"] .form-select:focus {
     background-color: #FFFFFF !important;
     color: #1D1135 !important;
     border-color: #7C3AED !important;
     box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15) !important;
 }
 
+html[data-theme="light"] input[type="date"],
+html[data-theme="light"] input[type="time"],
 [data-theme="light"] input[type="date"],
-[data-theme="light"] input[type="time"],
-:root:not(.dark) input[type="date"],
-:root:not(.dark) input[type="time"] {
+[data-theme="light"] input[type="time"] {
     color-scheme: light !important;
     color: #1D1135 !important;
     background-color: #FFFFFF !important;
+}
+
+/* Dark mode explicit rule for cards and labels */
+html.dark .card,
+html[data-theme="dark"] .card,
+[data-theme="dark"] .card {
+    background-color: var(--bg-card);
+    border-color: var(--border-editorial);
+    color: var(--text-main);
+}
+
+html.dark .form-label,
+html[data-theme="dark"] .form-label,
+[data-theme="dark"] .form-label {
+    color: var(--text-main) !important;
+}
+
+html.dark input[type="date"],
+html.dark input[type="time"],
+html[data-theme="dark"] input[type="date"],
+html[data-theme="dark"] input[type="time"],
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] input[type="time"] {
+    color-scheme: dark !important;
+    color: var(--text-main) !important;
+    background-color: var(--bg-card) !important;
 }
