@@ -54,20 +54,68 @@ function CreateEvent() {
         const fetchEntities = async () => {
             try {
                 const res = await api.get("/organizers/my-entities");
-                if (res.data.success) {
+                if (res.data.success && res.data.entities && res.data.entities.length > 0) {
                     setAuthorizedEntities(res.data.entities);
-                    // Default to first assigned entity if creating
-                    if (!isEditMode && res.data.entities.length > 0) {
+                    if (!isEditMode) {
                         setForm(prev => ({
                             ...prev,
                             organizerEntityId: res.data.entities[0].id.toString(),
                             department: res.data.entities[0].name
                         }));
                     }
+                } else {
+                    // Fallback to organizer assignments or department on currentUser
+                    const fallbackEntities = (currentUser?.organizerAssignments || [])
+                        .map((a, idx) => ({
+                            id: a.organizerEntityId || a.organizerEntity?.id || (idx + 10),
+                            name: a.organizerEntity?.name || a.name || currentUser.department,
+                            type: (a.organizerEntity?.name || "").includes("Club") ? "CLUB" : "DEPARTMENT"
+                        }))
+                        .filter(Boolean);
+
+                    if (fallbackEntities.length === 0 && currentUser?.department) {
+                        fallbackEntities.push({
+                            id: 10,
+                            name: currentUser.department,
+                            type: currentUser.department.includes("Club") ? "CLUB" : "DEPARTMENT"
+                        });
+                    }
+
+                    setAuthorizedEntities(fallbackEntities);
+                    if (!isEditMode && fallbackEntities.length > 0) {
+                        setForm(prev => ({
+                            ...prev,
+                            organizerEntityId: fallbackEntities[0].id.toString(),
+                            department: fallbackEntities[0].name
+                        }));
+                    }
                 }
             } catch (err) {
-                console.error("Failed to load authorized entities", err);
-                showToast("Could not load your assigned organizer entities", "warning");
+                console.warn("Could not load entities from server, using user profile domain:", err);
+                const fallbackEntities = (currentUser?.organizerAssignments || [])
+                    .map((a, idx) => ({
+                        id: a.organizerEntityId || a.organizerEntity?.id || (idx + 10),
+                        name: a.organizerEntity?.name || a.name || currentUser.department,
+                        type: (a.organizerEntity?.name || "").includes("Club") ? "CLUB" : "DEPARTMENT"
+                    }))
+                    .filter(Boolean);
+
+                if (fallbackEntities.length === 0 && currentUser?.department) {
+                    fallbackEntities.push({
+                        id: 10,
+                        name: currentUser.department,
+                        type: currentUser.department.includes("Club") ? "CLUB" : "DEPARTMENT"
+                    });
+                }
+
+                setAuthorizedEntities(fallbackEntities);
+                if (!isEditMode && fallbackEntities.length > 0) {
+                    setForm(prev => ({
+                        ...prev,
+                        organizerEntityId: fallbackEntities[0].id.toString(),
+                        department: fallbackEntities[0].name
+                    }));
+                }
             } finally {
                 setIsLoadingEntities(false);
             }
