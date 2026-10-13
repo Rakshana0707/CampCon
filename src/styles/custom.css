@@ -604,3 +604,43 @@
     color: #1D1135 !important;
     border-color: #EBE5F7 !important;
 }
+
+/* Light mode overrides for form background containers, cards, and input fields */
+[data-theme="light"] .card.bg-white.bg-opacity-5,
+:root:not(.dark) .card.bg-white.bg-opacity-5 {
+    background-color: #FAF8FE !important;
+    border-color: #EBE5F7 !important;
+}
+
+[data-theme="light"] .form-label,
+:root:not(.dark) .form-label {
+    color: #1D1135 !important;
+}
+
+[data-theme="light"] .form-control,
+[data-theme="light"] .form-select,
+:root:not(.dark) .form-control,
+:root:not(.dark) .form-select {
+    background-color: #FFFFFF !important;
+    color: #1D1135 !important;
+    border-color: #D4C7EE !important;
+}
+
+[data-theme="light"] .form-control:focus,
+[data-theme="light"] .form-select:focus,
+:root:not(.dark) .form-control:focus,
+:root:not(.dark) .form-select:focus {
+    background-color: #FFFFFF !important;
+    color: #1D1135 !important;
+    border-color: #7C3AED !important;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15) !important;
+}
+
+[data-theme="light"] input[type="date"],
+[data-theme="light"] input[type="time"],
+:root:not(.dark) input[type="date"],
+:root:not(.dark) input[type="time"] {
+    color-scheme: light !important;
+    color: #1D1135 !important;
+    background-color: #FFFFFF !important;
+}

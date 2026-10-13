@@ -218,6 +218,14 @@ const login = async (req, res, next) => {
             include: {
                 institution: {
                     select: { id: true, code: true, name: true, state: true, district: true, institutionType: true, isActive: true, status: true }
+                },
+                organizerAssignments: {
+                    select: {
+                        organizerEntityId: true,
+                        organizerEntity: {
+                            select: { id: true, name: true, type: true, category: true, isActive: true }
+                        }
+                    }
                 }
             }
         });

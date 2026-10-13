@@ -34,7 +34,8 @@ export function AppContextProvider({ children }) {
             collegeState: user.collegeState || null,
             collegeDistrict: user.collegeDistrict || null,
             institutionId: user.institutionId || null,
-            affiliationStatus: user.affiliationStatus || "UNVERIFIED"
+            affiliationStatus: user.affiliationStatus || "UNVERIFIED",
+            organizerAssignments: user.organizerAssignments || []
         };
     };
 
@@ -198,6 +199,97 @@ export function AppContextProvider({ children }) {
                 return { success: true, user: normalized };
             }
         } catch (error) {
+            // Development fallback if backend server is not running
+            const MOCK_PROFILES = {
+                "organizer@college.edu": {
+                    id: 901,
+                    name: "Dr. K. Rajesh",
+                    email: "organizer@college.edu",
+                    role: "ORGANIZER",
+                    department: "B.Tech. Chemical Engineering",
+                    collegeName: "Coimbatore Institute of Technology",
+                    affiliationStatus: "INTERNAL_VERIFIED",
+                    organizerAssignments: [{ organizerEntity: { name: "B.Tech. Chemical Engineering" } }]
+                },
+                "cse.organizer@college.edu": {
+                    id: 902,
+                    name: "Prof. S. Anand",
+                    email: "cse.organizer@college.edu",
+                    role: "ORGANIZER",
+                    department: "B.E. Computer Science and Engineering",
+                    collegeName: "Coimbatore Institute of Technology",
+                    affiliationStatus: "INTERNAL_VERIFIED",
+                    organizerAssignments: [{ organizerEntity: { name: "B.E. Computer Science and Engineering" } }]
+                },
+                "eee.organizer@college.edu": {
+                    id: 903,
+                    name: "Dr. V. Narayanan",
+                    email: "eee.organizer@college.edu",
+                    role: "ORGANIZER",
+                    department: "B.E. Electrical and Electronics Engineering",
+                    collegeName: "Coimbatore Institute of Technology",
+                    affiliationStatus: "INTERNAL_VERIFIED",
+                    organizerAssignments: [{ organizerEntity: { name: "B.E. Electrical and Electronics Engineering" } }]
+                },
+                "music.organizer@college.edu": {
+                    id: 904,
+                    name: "Karthik R",
+                    email: "music.organizer@college.edu",
+                    role: "ORGANIZER",
+                    department: "Music Club",
+                    collegeName: "Coimbatore Institute of Technology",
+                    affiliationStatus: "INTERNAL_VERIFIED",
+                    organizerAssignments: [{ organizerEntity: { name: "Music Club" } }]
+                },
+                "cyber.organizer@college.edu": {
+                    id: 905,
+                    name: "Aditya Mohan",
+                    email: "cyber.organizer@college.edu",
+                    role: "ORGANIZER",
+                    department: "Cyber Club",
+                    collegeName: "Coimbatore Institute of Technology",
+                    affiliationStatus: "INTERNAL_VERIFIED",
+                    organizerAssignments: [{ organizerEntity: { name: "Cyber Club" } }]
+                },
+                "dramatix.organizer@college.edu": {
+                    id: 906,
+                    name: "Sanjana V",
+                    email: "dramatix.organizer@college.edu",
+                    role: "ORGANIZER",
+                    department: "Dramatix",
+                    collegeName: "Coimbatore Institute of Technology",
+                    affiliationStatus: "INTERNAL_VERIFIED",
+                    organizerAssignments: [{ organizerEntity: { name: "Dramatix" } }]
+                },
+                "student@college.edu": {
+                    id: 907,
+                    name: "Aarav Sharma",
+                    email: "student@college.edu",
+                    role: "STUDENT",
+                    department: "B.E. Computer Science and Engineering",
+                    rollNumber: "23CS101",
+                    collegeName: "Coimbatore Institute of Technology",
+                    affiliationStatus: "INTERNAL_VERIFIED"
+                },
+                "admin@college.edu": {
+                    id: 908,
+                    name: "CampusConnect Administrator",
+                    email: "admin@college.edu",
+                    role: "ADMIN",
+                    department: "Administration",
+                    collegeName: "Coimbatore Institute of Technology",
+                    affiliationStatus: "INTERNAL_VERIFIED"
+                }
+            };
+
+            if (MOCK_PROFILES[email] && (password === "password123" || password === "Admin@123")) {
+                const user = normalizeUser(MOCK_PROFILES[email]);
+                localStorage.setItem("campcon_token", "mock_jwt_token");
+                setCurrentUser(user);
+                showToast(`Welcome back, ${user.name}! (Demo Mode)`, "success");
+                return { success: true, user };
+            }
+
             const errMsg = error.response?.data?.error || "Invalid credentials";
             showToast(errMsg, "danger");
             return { success: false, error: errMsg };

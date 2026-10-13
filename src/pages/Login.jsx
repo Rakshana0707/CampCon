@@ -51,8 +51,18 @@ function Login() {
         let testPassword = "password123";
         if (role === "student") {
             testEmail = "student@college.edu";
-        } else if (role === "organizer") {
+        } else if (role === "organizer-chem" || role === "organizer") {
             testEmail = "organizer@college.edu";
+        } else if (role === "organizer-cse") {
+            testEmail = "cse.organizer@college.edu";
+        } else if (role === "organizer-eee") {
+            testEmail = "eee.organizer@college.edu";
+        } else if (role === "organizer-music") {
+            testEmail = "music.organizer@college.edu";
+        } else if (role === "organizer-cyber") {
+            testEmail = "cyber.organizer@college.edu";
+        } else if (role === "organizer-dramatix") {
+            testEmail = "dramatix.organizer@college.edu";
         } else if (role === "organizer-pending") {
             testEmail = "vikram@college.edu";
         } else if (role === "admin") {
@@ -161,16 +171,78 @@ function Login() {
                                     >
                                         <FaUserGraduate className="text-primary" /> Student Account
                                     </button>
+
+                                    <div className="p-2 rounded" style={{ background: "rgba(255,255,255,0.03)", border: "1px dashed var(--border-editorial)" }}>
+                                        <div className="fs-9 text-uppercase text-muted fw-bold mb-1 d-flex align-items-center gap-1">
+                                            <FaBriefcase className="text-success" /> Domain Organizers (Isolated Rights)
+                                        </div>
+                                        <div className="row g-1">
+                                            <div className="col-6">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-secondary btn-sm w-100 py-1 fs-9 text-truncate text-start"
+                                                    onClick={() => handleQuickLogin("organizer-cse")}
+                                                    title="Prof. S. Anand (CSE Dept)"
+                                                >
+                                                    💻 CSE Dept
+                                                </button>
+                                            </div>
+                                            <div className="col-6">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-secondary btn-sm w-100 py-1 fs-9 text-truncate text-start"
+                                                    onClick={() => handleQuickLogin("organizer-chem")}
+                                                    title="Dr. K. Rajesh (Chem Dept)"
+                                                >
+                                                    🧪 Chemical Dept
+                                                </button>
+                                            </div>
+                                            <div className="col-6">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-secondary btn-sm w-100 py-1 fs-9 text-truncate text-start"
+                                                    onClick={() => handleQuickLogin("organizer-eee")}
+                                                    title="Dr. V. Narayanan (EEE Dept)"
+                                                >
+                                                    ⚡ EEE Dept
+                                                </button>
+                                            </div>
+                                            <div className="col-6">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-secondary btn-sm w-100 py-1 fs-9 text-truncate text-start"
+                                                    onClick={() => handleQuickLogin("organizer-music")}
+                                                    title="Karthik R (Music Club)"
+                                                >
+                                                    🎸 Music Club
+                                                </button>
+                                            </div>
+                                            <div className="col-6">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-secondary btn-sm w-100 py-1 fs-9 text-truncate text-start"
+                                                    onClick={() => handleQuickLogin("organizer-cyber")}
+                                                    title="Aditya Mohan (Cyber Club)"
+                                                >
+                                                    🛡️ Cyber Club
+                                                </button>
+                                            </div>
+                                            <div className="col-6">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-secondary btn-sm w-100 py-1 fs-9 text-truncate text-start"
+                                                    onClick={() => handleQuickLogin("organizer-dramatix")}
+                                                    title="Sanjana V (Dramatix)"
+                                                >
+                                                    🎭 Dramatix Club
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <button
                                         type="button"
-                                        className="btn btn-outline-light btn-sm py-2 d-flex align-items-center justify-content-center gap-2"
-                                        onClick={() => handleQuickLogin("organizer")}
-                                    >
-                                        <FaBriefcase className="text-success" /> Organizer (Approved)
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="btn btn-outline-light btn-sm py-2 d-flex align-items-center justify-content-center gap-2"
+                                        className="btn btn-outline-light btn-sm py-1 d-flex align-items-center justify-content-center gap-2 fs-8"
                                         onClick={() => handleQuickLogin("organizer-pending")}
                                     >
                                         <FaBriefcase className="text-warning" /> Organizer (Pending Approval)

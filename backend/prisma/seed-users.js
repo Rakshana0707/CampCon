@@ -85,53 +85,94 @@ async function seedStandardUsers() {
     });
     console.log("✅ External Student account ready: external.student@otheruniv.edu");
 
-    // 4. Approved Organizer Account
-    const approvedOrganizer = await prisma.user.upsert({
-        where: { email: 'organizer@college.edu' },
-        update: {
-            name: 'Dr. K. Rajesh',
-            role: 'ORGANIZER',
-            affiliationStatus: 'INTERNAL_VERIFIED',
-            department: 'B.Tech. Chemical Engineering',
-            collegeName: 'Our College',
-            isActive: true,
-            passwordHash: passwordHashDefault
-        },
-        create: {
-            name: 'Dr. K. Rajesh',
+    // 4. Approved Department & Club Organizers with Domain Isolation
+    const organizerProfiles = [
+        {
             email: 'organizer@college.edu',
-            passwordHash: passwordHashDefault,
-            role: 'ORGANIZER',
+            name: 'Dr. K. Rajesh',
             department: 'B.Tech. Chemical Engineering',
-            collegeName: 'Our College',
-            affiliationStatus: 'INTERNAL_VERIFIED',
-            isActive: true
+            entityName: 'B.Tech. Chemical Engineering'
+        },
+        {
+            email: 'cse.organizer@college.edu',
+            name: 'Prof. S. Anand',
+            department: 'B.E. Computer Science and Engineering',
+            entityName: 'B.E. Computer Science and Engineering'
+        },
+        {
+            email: 'eee.organizer@college.edu',
+            name: 'Dr. V. Narayanan',
+            department: 'B.E. Electrical and Electronics Engineering',
+            entityName: 'B.E. Electrical and Electronics Engineering'
+        },
+        {
+            email: 'music.organizer@college.edu',
+            name: 'Karthik R',
+            department: 'Music Club',
+            entityName: 'Music Club'
+        },
+        {
+            email: 'cyber.organizer@college.edu',
+            name: 'Aditya Mohan',
+            department: 'Cyber Club',
+            entityName: 'Cyber Club'
+        },
+        {
+            email: 'dramatix.organizer@college.edu',
+            name: 'Sanjana V',
+            department: 'Dramatix',
+            entityName: 'Dramatix'
         }
-    });
-    console.log("✅ Organizer account ready: organizer@college.edu");
+    ];
 
-    // Assign organizations to approved organizer
-    const chemDept = await prisma.organizerEntity.findFirst({ where: { name: 'B.Tech. Chemical Engineering' } });
-    const cseDept = await prisma.organizerEntity.findFirst({ where: { name: 'B.E. Computer Science and Engineering' } });
-    const gdscClub = await prisma.organizerEntity.findFirst({ where: { name: 'GDS Club' } });
-
-    const entitiesToAssign = [chemDept, cseDept, gdscClub].filter(Boolean);
-    for (const ent of entitiesToAssign) {
-        await prisma.organizerAssignment.upsert({
-            where: {
-                userId_organizerEntityId: {
-                    userId: approvedOrganizer.id,
-                    organizerEntityId: ent.id
-                }
+    for (const org of organizerProfiles) {
+        const user = await prisma.user.upsert({
+            where: { email: org.email },
+            update: {
+                name: org.name,
+                role: 'ORGANIZER',
+                affiliationStatus: 'INTERNAL_VERIFIED',
+                department: org.department,
+                collegeName: 'Our College',
+                isActive: true,
+                passwordHash: passwordHashDefault
             },
-            update: {},
             create: {
-                userId: approvedOrganizer.id,
+                name: org.name,
+                email: org.email,
+                passwordHash: passwordHashDefault,
+                role: 'ORGANIZER',
+                department: org.department,
+                collegeName: 'Our College',
+                affiliationStatus: 'INTERNAL_VERIFIED',
+                isActive: true
+            }
+        });
+
+        // Ensure organizer entity exists or find it
+        let ent = await prisma.organizerEntity.findFirst({ where: { name: org.entityName } });
+        if (!ent) {
+            const isClub = org.entityName.includes('Club') || org.entityName === 'Dramatix';
+            ent = await prisma.organizerEntity.create({
+                data: {
+                    name: org.entityName,
+                    type: isClub ? 'CLUB' : 'DEPARTMENT',
+                    category: isClub ? 'Cultural & Arts' : 'Undergraduate Programmes',
+                    isActive: true
+                }
+            });
+        }
+
+        // Clean out any conflicting assignments and set exact domain assignment
+        await prisma.organizerAssignment.deleteMany({ where: { userId: user.id } });
+        await prisma.organizerAssignment.create({
+            data: {
+                userId: user.id,
                 organizerEntityId: ent.id
             }
         });
+        console.log(`✅ Dedicated Organizer ready: ${org.email} (${org.name} - ${org.entityName})`);
     }
-    console.log(`✅ Assigned ${entitiesToAssign.length} organizations to organizer@college.edu`);
 
     // 5. Inactive / Pending Organizer Account (for testing rejection / pending state)
     await prisma.user.upsert({

@@ -50,8 +50,25 @@ function OrganizerDashboard() {
     const [volunteerFormSuccess, setVolunteerFormSuccess] = useState("");
     const [scannerInput, setScannerInput] = useState("");
 
-    // Identify events managed by this organizer
-    const myEvents = events.filter(e => e.organizerEmail === currentUser.email || e.organizer === currentUser.name);
+    // Identify organizer's assigned domain entities / departments
+    const organizerEntityNames = [
+        currentUser.department,
+        ...(currentUser.organizerAssignments || []).map(a => a.organizerEntity?.name || a.name)
+    ].filter(Boolean);
+
+    // Identify events managed by this organizer strictly within their assigned domain
+    const myEvents = events.filter(e => {
+        if (currentUser.role?.toLowerCase() === "admin") return true;
+
+        const matchesEmail = e.organizerEmail === currentUser.email || (currentUser.id && e.organizerId === currentUser.id);
+        const matchesDomain = organizerEntityNames.some(d => 
+            d.toLowerCase().trim() === (e.department || "").toLowerCase().trim() ||
+            d.toLowerCase().trim() === (e.organizingEntityName || "").toLowerCase().trim() ||
+            d.toLowerCase().trim() === (e.organizerEntity?.name || "").toLowerCase().trim()
+        );
+
+        return matchesEmail || matchesDomain;
+    });
     const displayEvents = myEvents;
     const myEventIds = displayEvents.map(e => e.id);
 
@@ -109,11 +126,33 @@ function OrganizerDashboard() {
         ]
     };
 
+    const canManageEvent = (event) => {
+        if (!event) return false;
+        if (currentUser.role?.toLowerCase() === "admin") return true;
+        const matchesEmail = event.organizerEmail === currentUser.email || (currentUser.id && event.organizerId === currentUser.id);
+        const matchesDomain = organizerEntityNames.some(d => 
+            d.toLowerCase().trim() === (event.department || "").toLowerCase().trim() ||
+            d.toLowerCase().trim() === (event.organizingEntityName || "").toLowerCase().trim() ||
+            d.toLowerCase().trim() === (event.organizerEntity?.name || "").toLowerCase().trim()
+        );
+        return matchesEmail || matchesDomain;
+    };
+
     const handleEdit = (id) => {
+        const target = events.find(e => e.id === id);
+        if (!canManageEvent(target)) {
+            alert("Permission Denied: You can only edit events belonging to your assigned department or club.");
+            return;
+        }
         navigate(`/edit-event/${id}`);
     };
 
     const handleDelete = (id) => {
+        const target = events.find(e => e.id === id);
+        if (!canManageEvent(target)) {
+            alert("Permission Denied: You can only delete events belonging to your assigned department or club.");
+            return;
+        }
         if (window.confirm("Are you sure you want to delete this event?")) {
             deleteEvent(id);
         }
