@@ -132,21 +132,18 @@ function Register() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [countdown, setCountdown] = useState(2);
+    const [registeredUser, setRegisteredUser] = useState(null);
+    const [registerError, setRegisterError] = useState("");
     const isJustRegistered = useRef(false);
 
     const isExternal = form.collegeName === "External College";
 
-    // Redirect if already logged in (only when visiting register page while already authenticated)
+    // Only redirect if there's an explicit destination from protected route navigation
     useEffect(() => {
         if (currentUser && !showSuccessModal && !isJustRegistered.current) {
             const from = location.state?.from?.pathname;
             if (from) {
                 navigate(from, { replace: true });
-            } else {
-                const role = currentUser.role.toLowerCase();
-                if (role === "admin") navigate("/admin");
-                else if (role === "organizer") navigate("/organizer");
-                else navigate("/student");
             }
         }
     }, [currentUser, navigate, location, showSuccessModal]);
@@ -197,24 +194,35 @@ function Register() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setRegisterError("");
 
         if (isExternal && !externalInstitution.institutionId) {
-            alert("Please select your institution from the directory.");
+            setRegisterError("Please select your institution from the directory.");
             return;
         }
 
         setIsSubmitting(true);
+        // Mark immediately so any context currentUser updates won't trigger unwanted redirects
+        isJustRegistered.current = true;
 
         try {
-            const effectiveDept = (selectedStream === "Other" || selectedCourse === "Other")
-                ? customCourse.trim()
-                : (selectedCourse.startsWith("M.Sc.") || selectedCourse.startsWith("MCA") || selectedCourse.startsWith("MBA")
-                    ? selectedCourse
-                    : `${selectedStream} ${selectedCourse}`);
+            let effectiveDept = "";
+            if (selectedStream === "Other") {
+                effectiveDept = customCourse.trim() || "General Studies";
+            } else if (selectedCourse === "Other") {
+                effectiveDept = customCourse.trim() || `${selectedStream} Other`;
+            } else if (selectedStream === "M.Sc. (Integrated)") {
+                effectiveDept = `M.Sc. Integrated (5 Years) ${selectedCourse}`;
+            } else if (selectedCourse.startsWith(selectedStream)) {
+                effectiveDept = selectedCourse;
+            } else {
+                effectiveDept = `${selectedStream} ${selectedCourse}`;
+            }
 
             if (!effectiveDept) {
-                alert("Please specify your course / department name.");
+                setRegisterError("Please specify your course / department name.");
                 setIsSubmitting(false);
+                isJustRegistered.current = false;
                 return;
             }
 
@@ -237,11 +245,17 @@ function Register() {
 
             const res = await registerUser(submissionData);
             if (res && res.success) {
-                isJustRegistered.current = true;
+                setRegisteredUser(res.user || submissionData);
+                setCountdown(2);
                 setShowSuccessModal(true);
+            } else {
+                isJustRegistered.current = false;
+                setRegisterError(res?.error || "Registration could not be completed. Please check your details.");
             }
         } catch (err) {
             console.error("Registration submit error:", err);
+            isJustRegistered.current = false;
+            setRegisterError("An unexpected error occurred during registration. Please try again.");
         } finally {
             setIsSubmitting(false);
         }
@@ -499,6 +513,13 @@ function Register() {
                                     </div>
                                 </div>
 
+                                {registerError && (
+                                    <div className="alert alert-danger d-flex align-items-center gap-2 py-2 px-3 mb-3 rounded-3 fs-8" role="alert">
+                                        <span className="fs-6">⚠️</span>
+                                        <div>{registerError}</div>
+                                    </div>
+                                )}
+
                                 <button
                                     className="btn btn-editorial-primary w-100 py-3 fw-bold fs-6 d-flex align-items-center justify-content-center gap-2"
                                     type="submit"
@@ -572,7 +593,7 @@ function Register() {
                                     Registration Successful!
                                 </h3>
                                 <p className="text-muted fs-8 mb-0">
-                                    Welcome to CampusConnect, <strong>{form.name || "Student"}</strong>
+                                    Welcome to CampusConnect, <strong>{registeredUser?.name || form.name || "Student"}</strong>
                                 </p>
                             </div>
 
@@ -581,20 +602,24 @@ function Register() {
                                 <div className="p-3 rounded-3 mb-3 border border-secondary border-opacity-25 bg-dark bg-opacity-50">
                                     <div className="d-flex justify-content-between mb-2 fs-8">
                                         <span className="text-muted">Account Name:</span>
-                                        <span className="text-white fw-semibold">{form.name}</span>
+                                        <span className="text-white fw-semibold">{registeredUser?.name || form.name}</span>
                                     </div>
                                     <div className="d-flex justify-content-between mb-2 fs-8">
                                         <span className="text-muted">Registered Email:</span>
-                                        <span className="text-white fw-semibold">{form.email}</span>
+                                        <span className="text-white fw-semibold">{registeredUser?.email || form.email}</span>
                                     </div>
                                     <div className="d-flex justify-content-between mb-2 fs-8">
-                                        <span className="text-muted">Department:</span>
-                                        <span className="text-white fw-semibold">{form.department || selectedCourse}</span>
+                                        <span className="text-muted">Roll / ID Number:</span>
+                                        <span className="text-white fw-semibold">{registeredUser?.rollNumber || form.rollNumber}</span>
+                                    </div>
+                                    <div className="d-flex justify-content-between mb-2 fs-8">
+                                        <span className="text-muted">Department / Course:</span>
+                                        <span className="text-white fw-semibold">{registeredUser?.department || form.department || selectedCourse}</span>
                                     </div>
                                     <div className="d-flex justify-content-between fs-8">
                                         <span className="text-muted">College Affiliation:</span>
                                         <span className="text-white fw-semibold">
-                                            {isExternal ? (externalInstitution.collegeName || "External College") : "CIT (Internal Verified)"}
+                                            {registeredUser?.collegeName || (isExternal ? (externalInstitution.collegeName || "External College") : "CIT (Internal Verified)")}
                                         </span>
                                     </div>
                                 </div>

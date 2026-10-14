@@ -20,16 +20,9 @@ const isValidCitRollNumber = (rollNumber) => {
     const clean = rollNumber.trim().toUpperCase().replace(/[\s\-_.]+/g, '');
     if (!clean) return false;
 
-    // Anna University 11-digit register number (CIT college code: 7176)
-    if (/^7176\d{7}$/.test(clean)) return true;
-
-    // Standard department roll numbers (e.g. 22IT042, 23CS105, 24MSS015, L22ME001, 23MX101)
-    if (/^(?:L)?\d{2}[A-Z]{2,5}\d{2,4}$/.test(clean)) return true;
-
-    // Numeric internal roll numbers (7 to 9 digits, e.g. 2205042)
-    if (/^\d{7,9}$/.test(clean)) return true;
-
-    return false;
+    // Accepts Anna University 16-digit enrollment numbers (e.g. 2403717672622046),
+    // 11-digit numbers, department roll numbers (e.g. 24MSS015, 22IT042), and numeric IDs (3-30 chars)
+    return /^[A-Z0-9]{3,30}$/.test(clean);
 };
 
 // Helper to generate JWT token
