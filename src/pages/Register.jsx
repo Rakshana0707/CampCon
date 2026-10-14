@@ -205,41 +205,44 @@ function Register() {
 
         setIsSubmitting(true);
 
-        const effectiveDept = (selectedStream === "Other" || selectedCourse === "Other")
-            ? customCourse.trim()
-            : (selectedCourse.startsWith("M.Sc.") || selectedCourse.startsWith("MCA") || selectedCourse.startsWith("MBA")
-                ? selectedCourse
-                : `${selectedStream} ${selectedCourse}`);
+        try {
+            const effectiveDept = (selectedStream === "Other" || selectedCourse === "Other")
+                ? customCourse.trim()
+                : (selectedCourse.startsWith("M.Sc.") || selectedCourse.startsWith("MCA") || selectedCourse.startsWith("MBA")
+                    ? selectedCourse
+                    : `${selectedStream} ${selectedCourse}`);
 
-        if (!effectiveDept) {
-            alert("Please specify your course / department name.");
-            setIsSubmitting(false);
-            return;
-        }
-
-        const submissionData = isExternal
-            ? {
-                ...form,
-                department: effectiveDept,
-                collegeName: externalInstitution.collegeName,
-                affiliationType: "EXTERNAL",
-                collegeState: externalInstitution.state,
-                collegeDistrict: externalInstitution.district,
-                institutionId: parseInt(externalInstitution.institutionId, 10)
+            if (!effectiveDept) {
+                alert("Please specify your course / department name.");
+                setIsSubmitting(false);
+                return;
             }
-            : {
-                ...form,
-                department: effectiveDept,
-                collegeName: "Coimbatore Institute of Technology",
-                affiliationType: "INTERNAL"
-            };
 
-        const res = await registerUser(submissionData);
-        if (res.success) {
-            isJustRegistered.current = true;
-            setIsSubmitting(false);
-            setShowSuccessModal(true);
-        } else {
+            const submissionData = isExternal
+                ? {
+                    ...form,
+                    department: effectiveDept,
+                    collegeName: externalInstitution.collegeName,
+                    affiliationType: "EXTERNAL",
+                    collegeState: externalInstitution.state,
+                    collegeDistrict: externalInstitution.district,
+                    institutionId: parseInt(externalInstitution.institutionId, 10)
+                }
+                : {
+                    ...form,
+                    department: effectiveDept,
+                    collegeName: "Coimbatore Institute of Technology",
+                    affiliationType: "INTERNAL"
+                };
+
+            const res = await registerUser(submissionData);
+            if (res && res.success) {
+                isJustRegistered.current = true;
+                setShowSuccessModal(true);
+            }
+        } catch (err) {
+            console.error("Registration submit error:", err);
+        } finally {
             setIsSubmitting(false);
         }
     };

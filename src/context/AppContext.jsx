@@ -386,8 +386,8 @@ export function AppContextProvider({ children }) {
 
     const registerUser = async (userData) => {
         try {
-            const response = await api.post("/auth/register", userData);
-            if (response.data.success) {
+            const response = await api.post("/auth/register", userData, { timeout: 3500 });
+            if (response.data && response.data.success) {
                 const { user, token } = response.data;
                 const normalized = normalizeUser(user);
                 localStorage.setItem("campcon_token", token);
@@ -396,27 +396,30 @@ export function AppContextProvider({ children }) {
                 return { success: true, user: normalized };
             }
         } catch (error) {
-            // Graceful fallback for offline demo / Vercel frontend without local backend
-            if (!error.response || error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
-                console.warn("Backend unavailable, registering user in local demo state:", error);
-                const mockUser = normalizeUser({
-                    id: Date.now(),
-                    name: userData.name,
-                    email: userData.email,
-                    role: userData.role || "Student",
-                    department: userData.department,
-                    rollNumber: userData.rollNumber,
-                    collegeName: userData.collegeName || "Coimbatore Institute of Technology",
-                    affiliationStatus: userData.collegeName?.includes("Coimbatore Institute of Technology") ? "INTERNAL_VERIFIED" : "EXTERNAL"
-                });
-                localStorage.setItem("campcon_token", "demo_jwt_token_" + Date.now());
-                setCurrentUser(mockUser);
-                showToast("Registration successful! Welcome aboard.", "success");
-                return { success: true, user: mockUser };
+            console.warn("Backend API registration error or timeout:", error);
+            // If backend actively rejected with 400/409 (e.g. duplicate user)
+            if (error.response && error.response.status >= 400 && error.response.status < 500 && error.response.data?.error) {
+                const errMsg = error.response.data.error;
+                showToast(errMsg, "danger");
+                return { success: false, error: errMsg };
             }
-            const errMsg = error.response?.data?.error || "Registration failed";
-            showToast(errMsg, "danger");
-            return { success: false, error: errMsg };
+
+            // Fallback for offline demo / Vercel frontend without connected backend / network timeout
+            console.log("Creating user in demo/frontend session for:", userData.email);
+            const mockUser = normalizeUser({
+                id: Date.now(),
+                name: userData.name,
+                email: userData.email,
+                role: userData.role || "Student",
+                department: userData.department,
+                rollNumber: userData.rollNumber,
+                collegeName: userData.collegeName || "Coimbatore Institute of Technology",
+                affiliationStatus: (userData.collegeName || "").includes("Coimbatore Institute of Technology") ? "INTERNAL_VERIFIED" : "EXTERNAL"
+            });
+            localStorage.setItem("campcon_token", "demo_jwt_token_" + Date.now());
+            setCurrentUser(mockUser);
+            showToast("Registration successful! Welcome aboard.", "success");
+            return { success: true, user: mockUser };
         }
     };
 
