@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { AppContext } from '../context/AppContext';
-import { FaClock, FaMapMarkerAlt, FaUsers } from 'react-icons/fa';
+import { FaClock, FaMapMarkerAlt, FaUsers, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
 
 function SymposiumScheduleViewer({
   event = {},
@@ -13,6 +13,7 @@ function SymposiumScheduleViewer({
   const [activeDay, setActiveDay] = useState(1);
   const { registerForActivity, cancelActivityRegistration, activityRegistrations } = useContext(AppContext);
   const [processingActivityId, setProcessingActivityId] = useState(null);
+  const [confirmModalData, setConfirmModalData] = useState(null);
 
   // Fallback to event properties if dayNumbers or activities not passed directly
   const effectiveDayNumbers = dayNumbers && dayNumbers.length > 0
@@ -54,23 +55,33 @@ function SymposiumScheduleViewer({
     return activityRegistrations?.some(ar => ar.activityId === activityId && ar.status !== 'CANCELLED');
   };
 
-  const handleActivityRegister = async (activity) => {
+  const handleInitiateActivityAction = (activity) => {
     if (!currentUser) {
       alert('Please log in to register for activities.');
       return;
     }
-    if (activity.requiresOverallRegistration && !isRegisteredOverall) {
+    const registered = isActivityRegistered(activity.id);
+    if (!registered && activity.requiresOverallRegistration && !isRegisteredOverall) {
       alert('This activity requires overall symposium registration first. Please register for the symposium above!');
       return;
     }
-    const registered = isActivityRegistered(activity.id);
+    setConfirmModalData({
+      activity,
+      action: registered ? 'cancel' : 'register'
+    });
+  };
+
+  const handleConfirmActivityAction = async () => {
+    if (!confirmModalData) return;
+    const { activity, action } = confirmModalData;
     setProcessingActivityId(activity.id);
-    if (registered) {
+    if (action === 'cancel') {
       await cancelActivityRegistration(activity.id);
     } else {
       await registerForActivity(activity.id);
     }
     setProcessingActivityId(null);
+    setConfirmModalData(null);
   };
 
   return (
@@ -138,7 +149,7 @@ function SymposiumScheduleViewer({
                     <button
                       className={`btn btn-sm px-4 py-2 fw-bold ${registered ? 'btn-success' : isFull ? 'btn-secondary disabled' : 'btn-outline-warning'}`}
                       disabled={isProcessing || (isFull && !registered)}
-                      onClick={() => handleActivityRegister(act)}
+                      onClick={() => handleInitiateActivityAction(act)}
                     >
                       {isProcessing ? (
                         <span className="spinner-border spinner-border-sm me-1" />
@@ -157,6 +168,137 @@ function SymposiumScheduleViewer({
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Confirmation Box Modal for Symposium Activity Registration & Cancellation */}
+      {confirmModalData && (
+        <div 
+          className="modal fade show d-block" 
+          tabIndex="-1" 
+          style={{ background: "rgba(9, 13, 22, 0.85)", backdropFilter: "blur(6px)", zIndex: 1060 }}
+        >
+          <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: "480px" }}>
+            <div className="modal-content text-white border border-secondary border-opacity-50 shadow-lg rounded-4 overflow-hidden" style={{ background: "var(--bg-card, #111827)" }}>
+              {/* Header */}
+              <div 
+                className="p-3 px-4 d-flex justify-content-between align-items-center"
+                style={{
+                  background: confirmModalData.action === 'register' 
+                    ? "linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.1) 100%)" 
+                    : "linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(185, 28, 28, 0.1) 100%)",
+                  borderBottom: "1px solid rgba(255, 255, 255, 0.1)"
+                }}
+              >
+                <div className="d-flex align-items-center gap-2">
+                  {confirmModalData.action === 'register' ? (
+                    <FaCheckCircle className="text-warning" size={18} />
+                  ) : (
+                    <FaExclamationTriangle className="text-danger" size={18} />
+                  )}
+                  <h5 className="mb-0 fw-bold fs-6">
+                    {confirmModalData.action === 'register' ? "Confirm Event Registration" : "Confirm Cancellation"}
+                  </h5>
+                </div>
+                <button 
+                  type="button" 
+                  className="btn-close btn-close-white" 
+                  onClick={() => setConfirmModalData(null)}
+                  aria-label="Close"
+                />
+              </div>
+
+              {/* Body */}
+              <div className="p-4">
+                <div className="mb-3">
+                  <span className="badge bg-primary bg-opacity-20 text-primary border border-primary border-opacity-30 mb-2 fs-9">
+                    {confirmModalData.activity.category || "Symposium Track"}
+                  </span>
+                  <h4 className="fw-bold mb-1 text-white" style={{ fontSize: "1.2rem" }}>
+                    {confirmModalData.activity.name}
+                  </h4>
+                  <div className="text-muted fs-8">
+                    Part of <strong className="text-white text-opacity-90">{event?.title || "Symposium"}</strong>
+                  </div>
+                </div>
+
+                {/* Event Snapshot Details */}
+                <div className="p-3 rounded-3 mb-3" style={{ background: "rgba(255, 255, 255, 0.04)", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                  <div className="row g-2 fs-8">
+                    <div className="col-6">
+                      <span className="text-muted d-block fs-9 text-uppercase">Schedule</span>
+                      <span className="text-white fw-semibold">
+                        Day {confirmModalData.activity.dayNumber}
+                      </span>
+                      <div className="text-muted fs-9">
+                        {new Date(confirmModalData.activity.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(confirmModalData.activity.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
+                    <div className="col-6">
+                      <span className="text-muted d-block fs-9 text-uppercase">Venue</span>
+                      <span className="text-white fw-semibold text-truncate d-block">
+                        {confirmModalData.activity.venue}
+                      </span>
+                    </div>
+                    <div className="col-6 mt-2">
+                      <span className="text-muted d-block fs-9 text-uppercase">Participant Fee</span>
+                      <span className="text-success fw-bold">
+                        {confirmModalData.activity.fee > 0 ? `₹${confirmModalData.activity.fee}` : "Free (Symposium Pass)"}
+                      </span>
+                    </div>
+                    <div className="col-6 mt-2">
+                      <span className="text-muted d-block fs-9 text-uppercase">Seat Availability</span>
+                      <span className="text-info fw-semibold">
+                        {confirmModalData.activity.availableSeats} seats remaining
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Notice Message */}
+                <p className="fs-8 text-muted mb-0">
+                  {confirmModalData.action === 'register' ? (
+                    <>
+                      📌 <strong>Registration Notice:</strong> By confirming, a seat will be reserved under your name (<strong>{currentUser?.name}</strong>). This will be linked to your symposium entry pass and listed under your personal tickets.
+                    </>
+                  ) : (
+                    <>
+                      ⚠️ <strong>Cancellation Notice:</strong> Are you sure you want to cancel your registration for this event? Your reserved seat will be released for other students.
+                    </>
+                  )}
+                </p>
+              </div>
+
+              {/* Footer Buttons */}
+              <div className="p-3 px-4 d-flex justify-content-end gap-2 border-top border-secondary border-opacity-25" style={{ background: "rgba(0,0,0,0.2)" }}>
+                <button 
+                  type="button" 
+                  className="btn btn-outline-light btn-sm px-3"
+                  onClick={() => setConfirmModalData(null)}
+                  disabled={processingActivityId === confirmModalData.activity.id}
+                >
+                  Nevermind
+                </button>
+                <button 
+                  type="button" 
+                  className={`btn btn-sm px-4 fw-bold ${confirmModalData.action === 'register' ? 'btn-warning text-dark' : 'btn-danger'}`}
+                  onClick={handleConfirmActivityAction}
+                  disabled={processingActivityId === confirmModalData.activity.id}
+                >
+                  {processingActivityId === confirmModalData.activity.id ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                      Processing...
+                    </>
+                  ) : confirmModalData.action === 'register' ? (
+                    "Confirm & Register"
+                  ) : (
+                    "Yes, Cancel Registration"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

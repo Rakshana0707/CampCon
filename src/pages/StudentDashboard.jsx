@@ -19,16 +19,58 @@ import {
     FaClock,
     FaInfoCircle,
     FaQrcode,
-    FaMapMarkerAlt
+    FaMapMarkerAlt,
+    FaCheckCircle,
+    FaExclamationTriangle,
+    FaListUl
 } from "react-icons/fa";
 
 function StudentDashboard() {
-    const { currentUser, events, registrations, bookmarks, notifications, cancelEventRegistration, markNotificationAsRead } = useContext(AppContext);
+    const { 
+        currentUser, 
+        events, 
+        registrations, 
+        activityRegistrations,
+        cancelActivityRegistration,
+        bookmarks, 
+        notifications, 
+        cancelEventRegistration, 
+        markNotificationAsRead 
+    } = useContext(AppContext);
     const [searchParams, setSearchParams] = useSearchParams();
     
     const [selectedTicketEvent, setSelectedTicketEvent] = useState(null);
     const [selectedCert, setSelectedCert] = useState(null);
+    const [selectedSymposiumForModal, setSelectedSymposiumForModal] = useState(null);
+    const [activityToCancel, setActivityToCancel] = useState(null);
+    const [isCancellingActivity, setIsCancellingActivity] = useState(false);
     const [activeTab, setActiveTab] = useState(searchParams.get("tab") === "tickets" ? "tickets" : "upcoming");
+
+    // Helper: Find enrolled activities for a given symposium event
+    const getEnrolledActivitiesForEvent = (eventId) => {
+        const evt = (events || []).find(e => e.id === eventId);
+        const evtActivityIds = new Set((evt?.activities || []).map(a => a.id));
+        
+        return (activityRegistrations || []).filter(ar => {
+            if (ar.status === 'CANCELLED' || ar.status === 'Cancelled') return false;
+            if (ar.activity?.eventId === eventId) return true;
+            if (evtActivityIds.has(ar.activityId)) return true;
+            return false;
+        }).map(ar => {
+            const actDetails = (evt?.activities || []).find(a => a.id === ar.activityId) || ar.activity || {};
+            return {
+                ...actDetails,
+                ...ar,
+                activityId: ar.activityId || actDetails.id,
+                name: actDetails.name || ar.activity?.name || `Activity #${ar.activityId}`,
+                category: actDetails.category || ar.activity?.category || "Symposium Track",
+                dayNumber: actDetails.dayNumber || ar.activity?.dayNumber || 1,
+                startTime: actDetails.startTime || ar.activity?.startTime,
+                endTime: actDetails.endTime || ar.activity?.endTime,
+                venue: actDetails.venue || ar.activity?.venue || evt?.venue
+            };
+        });
+    };
 
     useEffect(() => {
         const tabParam = searchParams.get("tab");
@@ -223,6 +265,8 @@ function StudentDashboard() {
                             if (!event) return null;
                             const ticketCode = reg.ticketId || `CC-${event.id}-${currentUser.id}`;
                             const isPast = new Date(event.date) < today;
+                            const isSymposium = event.eventFormat === "SYMPOSIUM" || (event.activities && event.activities.length > 0);
+                            const enrolledActivities = isSymposium ? getEnrolledActivitiesForEvent(event.id) : [];
 
                             return (
                                 <div key={reg.id} className="col-xl-6">
@@ -262,6 +306,16 @@ function StudentDashboard() {
                                                 <div className="font-monospace fs-9 fw-bold" style={{ color: "var(--accent-color)" }}>
                                                     Ticket ID: {ticketCode}
                                                 </div>
+                                                {isSymposium && (
+                                                    <div className="mt-2">
+                                                        <span className={`badge ${enrolledActivities.length > 0 ? "bg-warning bg-opacity-20 text-warning border border-warning border-opacity-30" : "bg-secondary bg-opacity-30 text-white text-opacity-75"} fs-9`}>
+                                                            <FaCalendarCheck className="me-1" />
+                                                            {enrolledActivities.length > 0 
+                                                                ? `${enrolledActivities.length} Symposium Event${enrolledActivities.length === 1 ? '' : 's'} Enrolled`
+                                                                : "No Individual Events Enrolled"}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             <div className="text-center flex-shrink-0">
@@ -271,11 +325,22 @@ function StudentDashboard() {
                                         </div>
 
                                         {/* Footer Actions */}
-                                        <div className="px-4 py-3 border-top border-secondary d-flex justify-content-between align-items-center gap-2" style={{ background: "rgba(0,0,0,0.12)" }}>
+                                        <div className="px-4 py-3 border-top border-secondary d-flex flex-wrap justify-content-between align-items-center gap-2" style={{ background: "rgba(0,0,0,0.12)" }}>
                                             <Link to={`/events/${event.id}`} className="btn btn-outline-light btn-sm px-3 fs-8">
                                                 <FaExternalLinkAlt size={10} className="me-1" /> Event Page
                                             </Link>
-                                            <div className="d-flex gap-2">
+                                            <div className="d-flex flex-wrap gap-2">
+                                                {/* Button to view all registered events in this symposium */}
+                                                {isSymposium && (
+                                                    <button
+                                                        className="btn btn-warning btn-sm px-3 fs-8 fw-bold d-flex align-items-center gap-1 text-dark shadow-sm"
+                                                        onClick={() => setSelectedSymposiumForModal({ event, enrolledActivities })}
+                                                        title="View what all events in this symposium you have registered for"
+                                                    >
+                                                        <FaCalendarCheck size={11} /> Registered Events ({enrolledActivities.length})
+                                                    </button>
+                                                )}
+
                                                 {!isPast && (
                                                     <button
                                                         className="btn btn-outline-danger btn-sm px-3 fs-8"
@@ -286,7 +351,12 @@ function StudentDashboard() {
                                                 )}
                                                 <button
                                                     className="btn btn-primary btn-sm px-3 fs-8 fw-bold d-flex align-items-center gap-1"
-                                                    onClick={() => setSelectedTicketEvent({ ...event, ticketId: ticketCode, regStatus: reg.status })}
+                                                    onClick={() => setSelectedTicketEvent({ 
+                                                        ...event, 
+                                                        ticketId: ticketCode, 
+                                                        regStatus: reg.status,
+                                                        enrolledActivities 
+                                                    })}
                                                 >
                                                     <FaTicketAlt size={11} /> Full Pass
                                                 </button>
@@ -479,6 +549,28 @@ function StudentDashboard() {
                                         </div>
                                     </div>
 
+                                    {/* Enrolled Symposium Events (If Applicable) */}
+                                    {selectedTicketEvent.enrolledActivities && selectedTicketEvent.enrolledActivities.length > 0 && (
+                                        <div className="p-3 rounded-3 mb-3 text-start" style={{ background: "rgba(245, 158, 11, 0.08)", border: "1px solid rgba(245, 158, 11, 0.25)" }}>
+                                            <div className="d-flex justify-content-between align-items-center mb-2">
+                                                <span className="fs-9 text-uppercase fw-bold text-warning d-flex align-items-center gap-1">
+                                                    <FaCalendarCheck size={11} /> Enrolled Symposium Events ({selectedTicketEvent.enrolledActivities.length})
+                                                </span>
+                                            </div>
+                                            <div className="d-flex flex-column gap-2">
+                                                {selectedTicketEvent.enrolledActivities.map(act => (
+                                                    <div key={act.id || act.activityId} className="p-2 rounded bg-black bg-opacity-40 d-flex justify-content-between align-items-center fs-8">
+                                                        <div>
+                                                            <strong className="text-white d-block">{act.name}</strong>
+                                                            <span className="text-muted fs-9">Day {act.dayNumber || 1} • {act.venue}</span>
+                                                        </div>
+                                                        <span className="badge bg-success bg-opacity-25 text-success fs-9">Enrolled</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div className="ticket-divider"></div>
 
                                     <div className="text-center">
@@ -505,6 +597,177 @@ function StudentDashboard() {
                                         Close Ticket
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Dedicated Registered Symposium Events Modal */}
+            {selectedSymposiumForModal && (
+                <div className="modal fade show d-block" tabIndex="-1" style={{ background: "rgba(9, 13, 22, 0.85)", backdropFilter: "blur(6px)", zIndex: 1055 }}>
+                    <div className="modal-dialog modal-dialog-centered modal-lg" style={{ maxWidth: "640px" }}>
+                        <div className="modal-content text-white border border-secondary border-opacity-50 shadow-lg rounded-4 overflow-hidden" style={{ background: "var(--bg-card, #111827)" }}>
+                            {/* Header */}
+                            <div className="p-3 px-4 d-flex justify-content-between align-items-center" style={{ background: "linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(37, 99, 235, 0.2) 100%)", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
+                                <div className="d-flex align-items-center gap-2">
+                                    <FaCalendarCheck className="text-warning" size={18} />
+                                    <div>
+                                        <h5 className="mb-0 fw-bold fs-6">{selectedSymposiumForModal.event.title}</h5>
+                                        <small className="text-muted fs-9">Your Registered Symposium Events & Contests</small>
+                                    </div>
+                                </div>
+                                <button 
+                                    type="button" 
+                                    className="btn-close btn-close-white" 
+                                    onClick={() => setSelectedSymposiumForModal(null)}
+                                    aria-label="Close"
+                                />
+                            </div>
+
+                            {/* Body */}
+                            <div className="p-4" style={{ maxHeight: "70vh", overflowY: "auto" }}>
+                                {getEnrolledActivitiesForEvent(selectedSymposiumForModal.event.id).length === 0 ? (
+                                    <div className="text-center py-4">
+                                        <FaInfoCircle size={36} className="text-warning text-opacity-50 mb-3" />
+                                        <h6 className="text-white fw-bold">No Individual Events Enrolled Yet</h6>
+                                        <p className="text-muted fs-8 mb-3" style={{ maxWidth: "420px", margin: "0 auto" }}>
+                                            You have an overall entry pass for <strong>{selectedSymposiumForModal.event.title}</strong>, but have not registered for any individual track competitions, paper presentations, or workshops yet.
+                                        </p>
+                                        <Link 
+                                            to={`/events/${selectedSymposiumForModal.event.id}`} 
+                                            className="btn btn-primary btn-sm px-4 fw-bold"
+                                            onClick={() => setSelectedSymposiumForModal(null)}
+                                        >
+                                            <FaExternalLinkAlt size={10} className="me-1" /> Explore Day-Wise Events & Register
+                                        </Link>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <div className="d-flex justify-content-between align-items-center mb-3">
+                                            <span className="fs-8 text-muted">
+                                                Enrolled in <strong className="text-warning">{getEnrolledActivitiesForEvent(selectedSymposiumForModal.event.id).length}</strong> event(s)
+                                            </span>
+                                            <Link 
+                                                to={`/events/${selectedSymposiumForModal.event.id}`} 
+                                                className="btn btn-outline-light btn-sm fs-9 py-1"
+                                                onClick={() => setSelectedSymposiumForModal(null)}
+                                            >
+                                                + Browse More Events
+                                            </Link>
+                                        </div>
+
+                                        <div className="d-flex flex-column gap-3">
+                                            {getEnrolledActivitiesForEvent(selectedSymposiumForModal.event.id).map((act) => (
+                                                <div 
+                                                    key={act.id || act.activityId} 
+                                                    className="p-3 rounded-3 border d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3"
+                                                    style={{ background: "rgba(255, 255, 255, 0.03)", borderColor: "rgba(255, 255, 255, 0.08)" }}
+                                                >
+                                                    <div className="flex-grow-1">
+                                                        <div className="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                                            <span className="badge bg-primary bg-opacity-20 text-primary border border-primary border-opacity-30 fs-9">
+                                                                {act.category || "Symposium Track"}
+                                                            </span>
+                                                            <span className="badge bg-warning bg-opacity-20 text-warning border border-warning border-opacity-30 fs-9">
+                                                                Day {act.dayNumber || 1}
+                                                            </span>
+                                                            <span className="badge bg-success bg-opacity-25 text-success fs-9">
+                                                                ✓ Enrolled
+                                                            </span>
+                                                        </div>
+                                                        <h6 className="fw-bold text-white mb-1">{act.name}</h6>
+                                                        {act.description && <p className="text-muted fs-9 mb-2 text-truncate" style={{ maxWidth: "420px" }}>{act.description}</p>}
+                                                        <div className="d-flex gap-3 text-muted fs-9 flex-wrap">
+                                                            {act.startTime && (
+                                                                <span>
+                                                                    <FaClock className="text-warning me-1" /> 
+                                                                    {new Date(act.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(act.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                </span>
+                                                            )}
+                                                            {act.venue && (
+                                                                <span><FaMapMarkerAlt className="text-danger me-1" /> {act.venue}</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex-shrink-0">
+                                                        <button 
+                                                            className="btn btn-outline-danger btn-sm px-3 fs-9"
+                                                            onClick={() => setActivityToCancel(act)}
+                                                        >
+                                                            Cancel Entry
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Footer */}
+                            <div className="p-3 px-4 d-flex justify-content-between align-items-center border-top border-secondary border-opacity-25" style={{ background: "rgba(0,0,0,0.2)" }}>
+                                <Link 
+                                    to={`/events/${selectedSymposiumForModal.event.id}`} 
+                                    className="btn btn-outline-light btn-sm fs-8"
+                                    onClick={() => setSelectedSymposiumForModal(null)}
+                                >
+                                    <FaExternalLinkAlt size={10} className="me-1" /> View Full Event Schedule
+                                </Link>
+                                <button 
+                                    type="button" 
+                                    className="btn btn-secondary btn-sm px-4"
+                                    onClick={() => setSelectedSymposiumForModal(null)}
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Cancel Activity Confirmation Box (inside StudentDashboard) */}
+            {activityToCancel && (
+                <div className="modal fade show d-block" tabIndex="-1" style={{ background: "rgba(0, 0, 0, 0.85)", zIndex: 1070 }}>
+                    <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: "420px" }}>
+                        <div className="modal-content text-white border border-danger border-opacity-50 shadow-lg rounded-4 overflow-hidden" style={{ background: "var(--bg-card, #111827)" }}>
+                            <div className="p-3 px-4 d-flex align-items-center gap-2 border-bottom border-secondary border-opacity-25" style={{ background: "rgba(239, 68, 68, 0.15)" }}>
+                                <FaExclamationTriangle className="text-danger" size={18} />
+                                <h6 className="mb-0 fw-bold">Cancel Event Registration?</h6>
+                            </div>
+                            <div className="p-4 fs-8">
+                                <p className="mb-2">
+                                    Are you sure you want to cancel your enrollment in:
+                                </p>
+                                <div className="p-2 rounded bg-white bg-opacity-5 text-white fw-semibold mb-3 border border-secondary border-opacity-25">
+                                    {activityToCancel.name}
+                                </div>
+                                <p className="text-muted mb-0 fs-9">
+                                    Your reserved seat will be released immediately and you will no longer appear on the attendance roster for this event.
+                                </p>
+                            </div>
+                            <div className="p-3 px-4 d-flex justify-content-end gap-2 border-top border-secondary border-opacity-25 bg-black bg-opacity-30">
+                                <button 
+                                    className="btn btn-outline-light btn-sm px-3" 
+                                    onClick={() => setActivityToCancel(null)}
+                                    disabled={isCancellingActivity}
+                                >
+                                    Nevermind
+                                </button>
+                                <button 
+                                    className="btn btn-danger btn-sm px-3 fw-bold"
+                                    disabled={isCancellingActivity}
+                                    onClick={async () => {
+                                        setIsCancellingActivity(true);
+                                        await cancelActivityRegistration(activityToCancel.activityId || activityToCancel.id);
+                                        setIsCancellingActivity(false);
+                                        setActivityToCancel(null);
+                                    }}
+                                >
+                                    {isCancellingActivity ? "Cancelling..." : "Yes, Cancel Registration"}
+                                </button>
                             </div>
                         </div>
                     </div>
