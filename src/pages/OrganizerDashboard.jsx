@@ -73,7 +73,7 @@ function OrganizerDashboard() {
     const myEventIds = displayEvents.map(e => e.id);
 
     // Identify registrations relating to this organizer's events
-    const myRegistrations = registrations.filter(r => myEventIds.includes(r.eventId));
+    const myRegistrations = registrations.filter(r => myEventIds.some(id => String(id) === String(r.eventId)));
 
     const pendingRequests = myRegistrations.filter(r => r.status === "Pending");
     const approvedRegistrations = myRegistrations.filter(r => r.status === "Approved" && r.role !== "Volunteer");
@@ -278,8 +278,8 @@ function OrganizerDashboard() {
         </div>
     );
 
-    const getStudentDetails = (studentId) => users.find(u => u.id === studentId);
-    const getEventDetails = (eventId) => events.find(e => e.id === eventId);
+    const getStudentDetails = (studentId) => users.find(u => String(u.id) === String(studentId));
+    const getEventDetails = (eventId) => events.find(e => String(e.id) === String(eventId));
     const selectedEventObj = events.find(e => String(e.id) === String(selectedVolunteerEvent));
 
     const normalizeDept = (dept) => {

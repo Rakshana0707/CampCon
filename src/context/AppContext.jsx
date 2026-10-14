@@ -108,8 +108,17 @@ export function AppContextProvider({ children }) {
     const [users, setUsers] = useState(DEFAULT_STUDENTS);
     const [notifications, setNotifications] = useState([]);
     const [bookmarks, setBookmarks] = useState([]);
-    const [registrations, setRegistrations] = useState([]);
+    const [registrations, setRegistrations] = useState(() => safeJSONParse("campcon_registrations", []));
     const [toasts, setToasts] = useState([]);
+
+    // Persist registrations to localStorage for offline and demo continuity
+    useEffect(() => {
+        try {
+            localStorage.setItem("campcon_registrations", JSON.stringify(registrations));
+        } catch (e) {
+            console.warn("Failed to persist registrations", e);
+        }
+    }, [registrations]);
     
     // Loading States
     const [isLoading, setIsLoading] = useState(false);
@@ -464,7 +473,7 @@ export function AppContextProvider({ children }) {
         try {
             if (!currentUser) return;
             const res = await api.get("/registrations/me");
-            if (res.data.success) {
+            if (res.data.success && Array.isArray(res.data.registrations)) {
                 // Map backend registrations to match frontend expectations
                 const mappedRegs = res.data.registrations.map(r => ({
                     id: r.id,
@@ -477,7 +486,16 @@ export function AppContextProvider({ children }) {
                     attendance: r.attendance === 'PRESENT' ? 'Present' : 'Pending',
                     certificateType: r.certificateType.charAt(0).toUpperCase() + r.certificateType.slice(1).toLowerCase()
                 }));
-                setRegistrations(mappedRegs);
+                // Merge with existing local registrations so demo/offline records are never lost
+                setRegistrations(prev => {
+                    const merged = [...mappedRegs];
+                    prev.forEach(existing => {
+                        if (!merged.some(m => String(m.id) === String(existing.id) || (m.ticketId && m.ticketId === existing.ticketId))) {
+                            merged.push(existing);
+                        }
+                    });
+                    return merged;
+                });
 
                 if (res.data.activityRegistrations) {
                     setActivityRegistrations(res.data.activityRegistrations);
@@ -496,8 +514,22 @@ export function AppContextProvider({ children }) {
             if (!currentUser || !events) return;
             
             const isAdmin = currentUser.role?.toLowerCase() === 'admin';
+            const organizerEntityNames = [
+                currentUser.department,
+                ...(currentUser.organizerAssignments || []).map(a => a.organizerEntity?.name || a.name)
+            ].filter(Boolean);
+
             const myEventIds = events
-                .filter(e => isAdmin || e.organizerId === currentUser.id)
+                .filter(e => {
+                    if (isAdmin) return true;
+                    const matchesEmail = e.organizerEmail === currentUser.email || (currentUser.id && e.organizerId === currentUser.id);
+                    const matchesDomain = organizerEntityNames.some(d => 
+                        d.toLowerCase().trim() === (e.department || "").toLowerCase().trim() ||
+                        d.toLowerCase().trim() === (e.organizingEntityName || "").toLowerCase().trim() ||
+                        d.toLowerCase().trim() === (e.organizerEntity?.name || "").toLowerCase().trim()
+                    );
+                    return matchesEmail || matchesDomain;
+                })
                 .map(e => e.id);
 
             let allRegs = [];
@@ -558,7 +590,16 @@ export function AppContextProvider({ children }) {
                 console.warn("Personal registration fetch skipped or unavailable", err);
             }
 
-            setRegistrations(allRegs);
+            // Preserve local volunteer registrations by merging instead of overwriting with empty
+            setRegistrations(prev => {
+                const merged = [...allRegs];
+                prev.forEach(existing => {
+                    if (!merged.some(m => String(m.id) === String(existing.id) || (m.ticketId && m.ticketId === existing.ticketId))) {
+                        merged.push(existing);
+                    }
+                });
+                return merged;
+            });
         } catch (error) {
              console.error("Failed to fetch organizer registrations", error);
         } finally {
