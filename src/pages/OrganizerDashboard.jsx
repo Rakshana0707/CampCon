@@ -242,9 +242,9 @@ function OrganizerDashboard() {
 
     const sidebarCharts = (
         <div className="d-flex flex-column gap-4">
-            <div className="glass-panel p-3">
-                <h5 className="text-white mb-3 d-flex align-items-center gap-2 fs-6" style={{ fontFamily: "var(--font-heading)" }}>
-                    <FaChartPie className="text-primary" /> Event Categories
+            <div className="glass-panel p-3" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border-editorial)" }}>
+                <h5 className="mb-3 d-flex align-items-center gap-2 fs-6 fw-bold" style={{ fontFamily: "var(--font-heading)", color: "var(--text-main)" }}>
+                    <FaChartPie style={{ color: "var(--accent-cobalt)" }} /> Event Categories
                 </h5>
                 <div style={{ maxHeight: "200px", display: "flex", justifyContent: "center" }}>
                     {displayEvents.length > 0 ? (
@@ -253,7 +253,7 @@ function OrganizerDashboard() {
                             options={{
                                 plugins: {
                                     legend: {
-                                        labels: { color: "#94a3b8", boxWidth: 12, font: { size: 10 } }
+                                        labels: { color: "var(--text-muted)", boxWidth: 12, font: { size: 10 } }
                                     }
                                 }
                             }}
@@ -264,9 +264,9 @@ function OrganizerDashboard() {
                 </div>
             </div>
 
-            <div className="glass-panel p-3">
-                <h5 className="text-white mb-3 d-flex align-items-center gap-2 fs-6" style={{ fontFamily: "var(--font-heading)" }}>
-                    <FaChartBar className="text-cyan" /> Registration Analytics
+            <div className="glass-panel p-3" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border-editorial)" }}>
+                <h5 className="mb-3 d-flex align-items-center gap-2 fs-6 fw-bold" style={{ fontFamily: "var(--font-heading)", color: "var(--text-main)" }}>
+                    <FaChartBar style={{ color: "var(--accent-cyan)" }} /> Registration Analytics
                 </h5>
                 <div style={{ maxHeight: "200px" }}>
                     {displayEvents.length > 0 ? (
@@ -339,34 +339,79 @@ function OrganizerDashboard() {
             sidebar={sidebarCharts}
         >
             {/* Tabs Row */}
-            <div className="d-flex flex-wrap gap-2 mb-4 border-bottom border-secondary pb-3">
+            <div className="d-flex flex-wrap gap-2 mb-4 pb-3" style={{ borderBottom: "1px solid var(--border-editorial)" }}>
                 <button
-                    className={`btn btn-sm py-2 px-4 fs-7 rounded-pill text-capitalize fw-bold d-flex align-items-center gap-2 ${activeTab === 'events' ? 'btn-primary' : 'btn-outline-light border-0'}`}
+                    className="btn btn-sm py-2 px-3.5 fs-7 rounded-pill text-capitalize fw-bold d-flex align-items-center gap-2 transition-all shadow-sm"
+                    style={activeTab === 'events' ? {
+                        backgroundColor: "var(--accent-cobalt)",
+                        color: "#ffffff",
+                        border: "1px solid var(--accent-cobalt)"
+                    } : {
+                        backgroundColor: "var(--bg-card)",
+                        color: "var(--text-muted)",
+                        border: "1px solid var(--border-editorial)"
+                    }}
                     onClick={() => setActiveTab('events')}
                 >
                     <FaCalendarAlt /> My Events ({displayEvents.length})
                 </button>
                 <button
-                    className={`btn btn-sm py-2 px-4 fs-7 rounded-pill text-capitalize fw-bold d-flex align-items-center gap-2 ${activeTab === 'symposiums' ? 'btn-warning text-dark' : 'btn-outline-light border-0'}`}
+                    className="btn btn-sm py-2 px-3.5 fs-7 rounded-pill text-capitalize fw-bold d-flex align-items-center gap-2 transition-all shadow-sm"
+                    style={activeTab === 'symposiums' ? {
+                        backgroundColor: "var(--accent-amber)",
+                        color: "#1e293b",
+                        border: "1px solid var(--accent-amber)"
+                    } : {
+                        backgroundColor: "var(--bg-card)",
+                        color: "var(--text-muted)",
+                        border: "1px solid var(--border-editorial)"
+                    }}
                     onClick={() => setActiveTab('symposiums')}
                 >
                     🏛️ Symposium Activities ({displayEvents.filter(e => e.eventFormat === 'SYMPOSIUM').length})
                 </button>
                 <button
-                    className={`btn btn-sm py-2 px-4 fs-7 rounded-pill text-capitalize fw-bold d-flex align-items-center gap-2 ${activeTab === 'approvals' ? 'btn-warning text-dark' : 'btn-outline-light border-0'}`}
+                    className="btn btn-sm py-2 px-3.5 fs-7 rounded-pill text-capitalize fw-bold d-flex align-items-center gap-2 transition-all shadow-sm"
+                    style={activeTab === 'approvals' ? {
+                        backgroundColor: "var(--accent-amber)",
+                        color: "#1e293b",
+                        border: "1px solid var(--accent-amber)"
+                    } : {
+                        backgroundColor: "var(--bg-card)",
+                        color: "var(--text-muted)",
+                        border: "1px solid var(--border-editorial)"
+                    }}
                     onClick={() => setActiveTab('approvals')}
                 >
                     <FaUserCheck /> Registration Approvals 
-                    {pendingRequests.length > 0 && <span className="badge bg-danger ms-1">{pendingRequests.length}</span>}
+                    {pendingRequests.length > 0 && <span className="badge bg-danger ms-1 text-white">{pendingRequests.length}</span>}
                 </button>
                 <button
-                    className={`btn btn-sm py-2 px-4 fs-7 rounded-pill text-capitalize fw-bold d-flex align-items-center gap-2 ${activeTab === 'volunteers' ? 'btn-info text-dark' : 'btn-outline-light border-0'}`}
+                    className="btn btn-sm py-2 px-3.5 fs-7 rounded-pill text-capitalize fw-bold d-flex align-items-center gap-2 transition-all shadow-sm"
+                    style={activeTab === 'volunteers' ? {
+                        backgroundColor: "var(--accent-cobalt)",
+                        color: "#ffffff",
+                        border: "1px solid var(--accent-cobalt)"
+                    } : {
+                        backgroundColor: "var(--bg-card)",
+                        color: "var(--text-muted)",
+                        border: "1px solid var(--border-editorial)"
+                    }}
                     onClick={() => setActiveTab('volunteers')}
                 >
                     <FaHandsHelping /> Volunteers ({assignedVolunteersList.length})
                 </button>
                 <button
-                    className={`btn btn-sm py-2 px-4 fs-7 rounded-pill text-capitalize fw-bold d-flex align-items-center gap-2 ${activeTab === 'attendance' ? 'btn-success text-dark' : 'btn-outline-light border-0'}`}
+                    className="btn btn-sm py-2 px-3.5 fs-7 rounded-pill text-capitalize fw-bold d-flex align-items-center gap-2 transition-all shadow-sm"
+                    style={activeTab === 'attendance' ? {
+                        backgroundColor: "var(--status-success)",
+                        color: "#ffffff",
+                        border: "1px solid var(--status-success)"
+                    } : {
+                        backgroundColor: "var(--bg-card)",
+                        color: "var(--text-muted)",
+                        border: "1px solid var(--border-editorial)"
+                    }}
                     onClick={() => setActiveTab('attendance')}
                 >
                     <FaQrcode /> Scanner
@@ -430,15 +475,15 @@ function OrganizerDashboard() {
                             <p className="mb-0">There are no pending registration requests for your events.</p>
                         </div>
                     ) : (
-                        <div className="glass-panel p-0 overflow-hidden">
+                        <div className="glass-panel p-0 overflow-hidden shadow-sm" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border-editorial)", borderRadius: "var(--radius-md)" }}>
                             <div className="table-responsive">
-                                <table className="table table-dark table-hover mb-0 align-middle">
-                                    <thead className="table-active text-muted fs-8 text-uppercase tracking-wider">
+                                <table className="table table-hover mb-0 align-middle" style={{ color: "var(--text-main)" }}>
+                                    <thead className="fs-8 text-uppercase tracking-wider" style={{ backgroundColor: "var(--bg-secondary)", color: "var(--text-muted)", borderBottom: "1px solid var(--border-editorial)" }}>
                                         <tr>
-                                            <th className="ps-4 py-3 border-0">Student</th>
-                                            <th className="py-3 border-0">Event</th>
-                                            <th className="py-3 border-0">Role</th>
-                                            <th className="pe-4 py-3 border-0 text-end">Action</th>
+                                            <th className="ps-4 py-3 border-0" style={{ color: "var(--text-muted)" }}>Student</th>
+                                            <th className="py-3 border-0" style={{ color: "var(--text-muted)" }}>Event</th>
+                                            <th className="py-3 border-0" style={{ color: "var(--text-muted)" }}>Role</th>
+                                            <th className="pe-4 py-3 border-0 text-end" style={{ color: "var(--text-muted)" }}>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -451,17 +496,17 @@ function OrganizerDashboard() {
                                             const studentDept = student?.department || req.studentDepartment || "Student";
                                             
                                             return (
-                                                <tr key={req.id}>
-                                                    <td className="ps-4 py-3 border-secondary border-opacity-25">
-                                                        <div className="fw-bold text-white fs-7">{studentName}</div>
-                                                        <div className="text-muted fs-8">{studentRoll} • {studentDept}</div>
+                                                <tr key={req.id} style={{ borderBottom: "1px solid var(--border-editorial)" }}>
+                                                    <td className="ps-4 py-3" style={{ borderColor: "var(--border-editorial)" }}>
+                                                        <div className="fw-bold fs-7" style={{ color: "var(--text-main)" }}>{studentName}</div>
+                                                        <div className="fs-8" style={{ color: "var(--text-muted)" }}>{studentRoll} • {studentDept}</div>
                                                     </td>
-                                                    <td className="py-3 border-secondary border-opacity-25">
-                                                        <span className="text-white fs-7">{event.title}</span>
-                                                        <span className="d-block text-muted fs-8">{event.date}</span>
+                                                    <td className="py-3" style={{ borderColor: "var(--border-editorial)" }}>
+                                                        <span className="fs-7 fw-semibold" style={{ color: "var(--text-main)" }}>{event.title}</span>
+                                                        <span className="d-block fs-8" style={{ color: "var(--text-muted)" }}>{event.date}</span>
                                                     </td>
-                                                    <td className="py-3 border-secondary border-opacity-25">
-                                                        <span className="badge bg-secondary bg-opacity-50 text-light border border-light border-opacity-25">
+                                                    <td className="py-3" style={{ borderColor: "var(--border-editorial)" }}>
+                                                        <span className="badge rounded-pill" style={{ backgroundColor: "var(--accent-primary-subtle)", color: "var(--accent-cobalt)", border: "1px solid var(--border-editorial)" }}>
                                                             {req.role}
                                                         </span>
                                                     </td>
@@ -494,9 +539,16 @@ function OrganizerDashboard() {
 
             {activeTab === "volunteers" && (
                 <div className="mt-3">
-                    <div className="glass-panel p-4 mb-4 border border-info border-opacity-25 bg-info bg-opacity-10">
-                        <h5 className="text-white mb-3 d-flex align-items-center gap-2 fs-6">
-                            <FaPlus className="text-info" /> Assign New Volunteer
+                    <div 
+                        className="glass-panel p-4 mb-4 shadow-sm"
+                        style={{
+                            backgroundColor: "var(--bg-card)",
+                            border: "1px solid var(--border-editorial)",
+                            borderRadius: "var(--radius-md)"
+                        }}
+                    >
+                        <h5 className="mb-3 d-flex align-items-center gap-2 fs-6 fw-bold" style={{ color: "var(--text-main)" }}>
+                            <FaPlus style={{ color: "var(--accent-cobalt)" }} /> Assign New Volunteer
                         </h5>
                         
                         {volunteerFormSuccess && (
@@ -512,10 +564,17 @@ function OrganizerDashboard() {
 
                         <form onSubmit={handleAssignVolunteer} className="row g-3 align-items-end">
                             <div className="col-md-5">
-                                <label htmlFor="volEvent" className="form-label text-white fs-8 fw-semibold mb-1">Select Event <span className="text-danger">*</span></label>
+                                <label htmlFor="volEvent" className="form-label fs-8 fw-semibold mb-1" style={{ color: "var(--text-main)" }}>
+                                    Select Event <span className="text-danger">*</span>
+                                </label>
                                 <select 
                                     id="volEvent"
                                     className="form-select fs-7" 
+                                    style={{
+                                        backgroundColor: "var(--bg-secondary)",
+                                        color: "var(--text-main)",
+                                        borderColor: "var(--border-editorial)"
+                                    }}
                                     value={selectedVolunteerEvent}
                                     onChange={(e) => {
                                         setSelectedVolunteerEvent(e.target.value);
@@ -536,9 +595,18 @@ function OrganizerDashboard() {
                             </div>
                             <div className="col-md-5">
                                 <div className="d-flex justify-content-between align-items-center mb-1">
-                                    <label htmlFor="volStudent" className="form-label text-white fs-8 fw-semibold mb-0">Select Student <span className="text-danger">*</span></label>
+                                    <label htmlFor="volStudent" className="form-label fs-8 fw-semibold mb-0" style={{ color: "var(--text-main)" }}>
+                                        Select Student <span className="text-danger">*</span>
+                                    </label>
                                     {selectedEventObj && (
-                                        <span className="badge bg-info bg-opacity-25 text-info fs-9 border border-info border-opacity-25">
+                                        <span 
+                                            className="badge fs-9 px-2 py-0.5 rounded-pill"
+                                            style={{
+                                                backgroundColor: "var(--accent-primary-subtle)",
+                                                color: "var(--accent-cobalt)",
+                                                border: "1px solid var(--border-editorial)"
+                                            }}
+                                        >
                                             {selectedEventObj.department || "Internal CIT Only"}
                                         </span>
                                     )}
@@ -546,6 +614,11 @@ function OrganizerDashboard() {
                                 <select 
                                     id="volStudent"
                                     className="form-select fs-7" 
+                                    style={{
+                                        backgroundColor: "var(--bg-secondary)",
+                                        color: "var(--text-main)",
+                                        borderColor: "var(--border-editorial)"
+                                    }}
                                     value={selectedVolunteerStudent}
                                     onChange={(e) => setSelectedVolunteerStudent(e.target.value)}
                                     disabled={isAssigning || !selectedVolunteerEvent}
@@ -566,12 +639,20 @@ function OrganizerDashboard() {
                                         </>
                                     )}
                                 </select>
-                                <div className="form-text fs-9 text-muted mt-1">
+                                <div className="form-text fs-9 mt-1" style={{ color: "var(--text-muted)" }}>
                                     <span className="text-warning">●</span> Only verified CIT {selectedEventObj?.department ? `${selectedEventObj.department} students` : 'department students'} can volunteer. External students are not eligible.
                                 </div>
                             </div>
                             <div className="col-md-2">
-                                <button type="submit" disabled={isAssigning || !selectedVolunteerEvent || !selectedVolunteerStudent} className="btn btn-info w-100 fw-bold d-flex justify-content-center align-items-center gap-2">
+                                <button 
+                                    type="submit" 
+                                    disabled={isAssigning || !selectedVolunteerEvent || !selectedVolunteerStudent} 
+                                    className="btn btn-primary w-100 fw-bold d-flex justify-content-center align-items-center gap-2 shadow-sm"
+                                    style={{
+                                        backgroundColor: "var(--accent-cobalt)",
+                                        borderColor: "var(--accent-cobalt)"
+                                    }}
+                                >
                                     {isAssigning ? <span className="spinner-border spinner-border-sm"></span> : "Assign"}
                                 </button>
                             </div>
@@ -579,9 +660,9 @@ function OrganizerDashboard() {
                     </div>
 
                     <div className="d-flex align-items-center justify-content-between mb-3">
-                        <h5 className="text-white mb-0 fw-bold fs-5 d-flex align-items-center gap-2" style={{ fontFamily: "var(--font-heading)" }}>
-                            <FaHandsHelping className="text-info" /> Assigned Team
-                            <span className="badge bg-secondary bg-opacity-25 text-info fs-8 fw-semibold px-2.5 py-1 rounded-pill border border-info border-opacity-25 ms-1">
+                        <h5 className="mb-0 fw-bold fs-5 d-flex align-items-center gap-2" style={{ fontFamily: "var(--font-heading)", color: "var(--text-main)" }}>
+                            <FaHandsHelping style={{ color: "var(--accent-cobalt)" }} /> Assigned Team
+                            <span className="badge fs-8 fw-semibold px-2.5 py-1 rounded-pill ms-1" style={{ backgroundColor: "var(--accent-primary-subtle)", color: "var(--accent-cobalt)", border: "1px solid var(--border-editorial)" }}>
                                 {assignedVolunteersList.length} Active
                             </span>
                         </h5>
@@ -604,101 +685,93 @@ function OrganizerDashboard() {
                                 const studentDept = student?.department || vol.studentDepartment || vol.user?.department || "Student";
 
                                 return (
-                                    <div key={vol.id} className="col-lg-6 col-12">
+                                    <div key={vol.id} className="col-12">
                                         <div 
-                                            className="glass-panel p-3 h-100 d-flex flex-column justify-content-between rounded-3 border border-secondary border-opacity-25 shadow-sm"
+                                            className="glass-panel p-3.5 rounded-3 shadow-sm"
                                             style={{
-                                                background: "rgba(15, 23, 42, 0.65)",
-                                                backdropFilter: "blur(12px)",
+                                                backgroundColor: "var(--bg-card)",
+                                                border: "1px solid var(--border-editorial)",
+                                                borderRadius: "var(--radius-md)",
+                                                color: "var(--text-main)",
                                                 transition: "all 0.2s ease"
                                             }}
                                         >
-                                            {/* Top Row: Avatar + Student info + Remove button */}
-                                            <div className="d-flex align-items-start justify-content-between gap-3">
-                                                <div className="d-flex align-items-center gap-3 min-w-0">
+                                            <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3">
+                                                {/* Left: Avatar + Student info */}
+                                                <div className="d-flex align-items-center gap-3 min-w-0 flex-grow-1">
                                                     <div 
                                                         className="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
                                                         style={{ 
                                                             width: "44px", 
                                                             height: "44px", 
-                                                            background: "linear-gradient(135deg, rgba(6, 182, 212, 0.18) 0%, rgba(99, 102, 241, 0.18) 100%)",
-                                                            border: "1px solid rgba(6, 182, 212, 0.35)",
-                                                            color: "#38bdf8"
+                                                            backgroundColor: "var(--accent-primary-subtle)",
+                                                            border: "1px solid var(--border-editorial)",
+                                                            color: "var(--accent-cobalt)"
                                                         }}
                                                     >
                                                         <FaHandsHelping size={20} />
                                                     </div>
-                                                    <div className="min-w-0">
+                                                    <div className="min-w-0 flex-grow-1">
                                                         <div className="d-flex align-items-center gap-2 flex-wrap mb-1">
-                                                            <h6 className="text-white fw-bold mb-0 fs-6 text-truncate" title={studentName}>
+                                                            <span className="fw-bold fs-6 text-truncate" style={{ color: "var(--text-main)" }}>
                                                                 {studentName}
-                                                            </h6>
+                                                            </span>
                                                             <span 
                                                                 className="badge px-2 py-0.5 fs-9 fw-semibold rounded-pill"
                                                                 style={{
-                                                                    backgroundColor: "rgba(255, 255, 255, 0.08)",
-                                                                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                                                                    color: "#94a3b8"
+                                                                    backgroundColor: "var(--bg-secondary)",
+                                                                    border: "1px solid var(--border-editorial)",
+                                                                    color: "var(--text-muted)"
                                                                 }}
                                                             >
                                                                 {studentRoll}
                                                             </span>
                                                         </div>
-                                                        <p className="text-secondary fs-8 mb-0 d-flex align-items-center gap-1.5 text-truncate" title={studentDept}>
-                                                            <FaGraduationCap size={13} className="text-info flex-shrink-0" />
-                                                            <span className="text-truncate">{studentDept}</span>
+                                                        <p className="fs-8 mb-0 d-flex align-items-center gap-1.5" style={{ color: "var(--text-muted)" }}>
+                                                            <FaGraduationCap size={13} style={{ color: "var(--accent-cobalt)" }} />
+                                                            <span>{studentDept}</span>
                                                         </p>
                                                     </div>
                                                 </div>
 
-                                                {/* Remove Action Button */}
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-sm d-flex align-items-center gap-1.5 px-2.5 py-1.5 fs-8 rounded-pill flex-shrink-0"
-                                                    style={{
-                                                        backgroundColor: "rgba(239, 68, 68, 0.1)",
-                                                        border: "1px solid rgba(239, 68, 68, 0.28)",
-                                                        color: "#f87171",
-                                                        transition: "all 0.18s ease"
-                                                    }}
-                                                    onMouseEnter={(e) => {
-                                                        e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.22)";
-                                                        e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.55)";
-                                                        e.currentTarget.style.color = "#ffffff";
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.1)";
-                                                        e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.28)";
-                                                        e.currentTarget.style.color = "#f87171";
-                                                    }}
-                                                    onClick={() => handleRemoveVolunteer(vol)}
-                                                    title={`Remove ${studentName} as volunteer`}
-                                                >
-                                                    <FaTrash size={11} /> <span>Remove</span>
-                                                </button>
-                                            </div>
+                                                {/* Right: Assigned Event Badge & Remove Action Button */}
+                                                <div className="d-flex align-items-center gap-2 flex-wrap flex-shrink-0 mt-2 mt-sm-0">
+                                                    <span 
+                                                        className="badge px-3 py-1.5 fs-8 fw-semibold rounded-pill d-flex align-items-center gap-1.5"
+                                                        style={{ 
+                                                            backgroundColor: "var(--accent-primary-subtle)",
+                                                            border: "1px solid var(--border-editorial)",
+                                                            color: "var(--accent-cobalt)"
+                                                        }}
+                                                        title={event.title}
+                                                    >
+                                                        <FaCalendarCheck size={12} />
+                                                        <span className="text-truncate" style={{ maxWidth: "220px" }}>{event.title}</span>
+                                                    </span>
 
-                                            {/* Bottom Strip: Assigned Event */}
-                                            <div 
-                                                className="mt-3 pt-2.5 d-flex align-items-center justify-content-between flex-wrap gap-2"
-                                                style={{ borderTop: "1px solid rgba(255, 255, 255, 0.07)" }}
-                                            >
-                                                <div className="d-flex align-items-center gap-1.5 fs-8 text-secondary">
-                                                    <FaCalendarCheck size={12} className="text-info flex-shrink-0" />
-                                                    <span>Assigned Event:</span>
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-sm d-flex align-items-center gap-1.5 px-3 py-1.5 fs-8 rounded-pill flex-shrink-0"
+                                                        style={{
+                                                            backgroundColor: "rgba(239, 68, 68, 0.1)",
+                                                            border: "1px solid rgba(239, 68, 68, 0.3)",
+                                                            color: "var(--status-danger)",
+                                                            transition: "all 0.18s ease"
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.22)";
+                                                            e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.55)";
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.1)";
+                                                            e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.3)";
+                                                        }}
+                                                        onClick={() => handleRemoveVolunteer(vol)}
+                                                        title={`Remove ${studentName} as volunteer`}
+                                                    >
+                                                        <FaTrash size={11} /> <span>Remove</span>
+                                                    </button>
                                                 </div>
-                                                <span 
-                                                    className="badge px-2.5 py-1 fs-8 fw-semibold rounded-pill text-truncate"
-                                                    style={{ 
-                                                        maxWidth: "280px",
-                                                        backgroundColor: "rgba(99, 102, 241, 0.16)",
-                                                        border: "1px solid rgba(99, 102, 241, 0.32)",
-                                                        color: "#c7d2fe"
-                                                    }}
-                                                    title={event.title}
-                                                >
-                                                    {event.title}
-                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -713,12 +786,12 @@ function OrganizerDashboard() {
                 <div className="mt-3">
                     <div className="row justify-content-center">
                         <div className="col-md-8">
-                            <div className="glass-panel p-5 text-center">
+                            <div className="glass-panel p-5 text-center shadow-sm" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border-editorial)", borderRadius: "var(--radius-md)" }}>
                                 <div className="mb-4">
-                                    <div className="d-inline-flex bg-success bg-opacity-25 p-4 rounded-circle mb-3" style={{ border: "2px dashed #10b981" }}>
-                                        <FaQrcode size={50} className="text-success" />
+                                    <div className="d-inline-flex p-4 rounded-circle mb-3" style={{ backgroundColor: "var(--accent-primary-subtle)", border: "2px dashed var(--status-success)" }}>
+                                        <FaQrcode size={50} style={{ color: "var(--status-success)" }} />
                                     </div>
-                                    <h4 className="text-white fw-bold" style={{ fontFamily: "var(--font-heading)" }}>QR Scanner Terminal (Simulation)</h4>
+                                    <h4 className="fw-bold mb-3" style={{ fontFamily: "var(--font-heading)", color: "var(--text-main)" }}>QR Scanner Terminal (Simulation)</h4>
                                     <div className="alert alert-warning py-2 fs-8 mb-4 border-0 text-start mx-auto" style={{ maxWidth: "450px" }}>
                                         <strong>Note:</strong> This interface simulates a hardware QR scanner. Type the alphanumeric Ticket ID manually. In a secure production environment, this would be an encrypted cryptographic payload scanned directly via camera.
                                     </div>
@@ -729,14 +802,27 @@ function OrganizerDashboard() {
                                     <input
                                         id="scanInput"
                                         type="text"
-                                        className="form-control form-control-lg bg-dark text-white border-secondary text-center font-monospace tracking-wider"
+                                        className="form-control form-control-lg text-center font-monospace tracking-wider"
+                                        style={{
+                                            backgroundColor: "var(--bg-secondary)",
+                                            color: "var(--text-main)",
+                                            borderColor: "var(--border-editorial)"
+                                        }}
                                         placeholder="e.g. CC-1-2"
                                         value={scannerInput}
                                         onChange={(e) => setScannerInput(e.target.value.toUpperCase())}
                                         disabled={isScanning}
                                         required
                                     />
-                                    <button type="submit" disabled={isScanning} className="btn btn-success btn-lg px-4 d-flex align-items-center gap-2 fw-bold">
+                                    <button 
+                                        type="submit" 
+                                        disabled={isScanning} 
+                                        className="btn btn-success btn-lg px-4 d-flex align-items-center gap-2 fw-bold shadow-sm"
+                                        style={{
+                                            backgroundColor: "var(--status-success)",
+                                            borderColor: "var(--status-success)"
+                                        }}
+                                    >
                                         {isScanning ? <span className="spinner-border spinner-border-sm"></span> : <><FaSearch /> Verify</>}
                                     </button>
                                 </form>
@@ -795,23 +881,31 @@ function OrganizerSymposiumCard({ symposium }) {
     };
 
     return (
-        <div className="glass-panel p-4 border border-warning border-opacity-30 rounded-4">
+        <div className="glass-panel p-4 rounded-4 shadow-sm mb-4" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border-editorial)", color: "var(--text-main)" }}>
             <div className="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
                 <div>
                     <span className="badge bg-warning text-dark fw-bold px-2 py-1 mb-1">🏛️ DEDICATED SYMPOSIUM</span>
-                    <h4 className="text-white fw-bold mb-1">{symposium.title}</h4>
-                    <span className="text-muted fs-8">
+                    <h4 className="fw-bold mb-1" style={{ color: "var(--text-main)" }}>{symposium.title}</h4>
+                    <span className="fs-8" style={{ color: "var(--text-muted)" }}>
                         {symposium.date} to {symposium.endDate || symposium.date} • {symposium.venue} • Capacity: {symposium.seats} seats
                     </span>
                 </div>
                 <div className="d-flex gap-2">
                     <button 
-                        className="btn btn-warning text-dark btn-sm fw-bold d-flex align-items-center gap-1"
+                        className="btn btn-warning text-dark btn-sm fw-bold d-flex align-items-center gap-1 shadow-sm"
                         onClick={() => setShowAddModal(true)}
                     >
                         <FaPlus /> Add Activity
                     </button>
-                    <Link to={`/events/${symposium.id}`} className="btn btn-outline-light btn-sm">
+                    <Link 
+                        to={`/events/${symposium.id}`} 
+                        className="btn btn-sm shadow-sm"
+                        style={{
+                            backgroundColor: "var(--bg-secondary)",
+                            color: "var(--text-main)",
+                            border: "1px solid var(--border-editorial)"
+                        }}
+                    >
                         Public View →
                     </Link>
                 </div>
@@ -819,43 +913,43 @@ function OrganizerSymposiumCard({ symposium }) {
 
             {/* Scheduled Activities Listing */}
             <div className="mt-3">
-                <h6 className="text-white fw-bold mb-2 fs-7">Child Activities ({activities.length}):</h6>
+                <h6 className="fw-bold mb-2 fs-7" style={{ color: "var(--text-main)" }}>Child Activities ({activities.length}):</h6>
                 {activities.length === 0 ? (
-                    <div className="p-3 rounded-3 bg-dark bg-opacity-40 text-muted fs-8 text-center border border-secondary border-opacity-25">
+                    <div className="p-3 rounded-3 fs-8 text-center" style={{ backgroundColor: "var(--bg-secondary)", color: "var(--text-muted)", border: "1px solid var(--border-editorial)" }}>
                         No child activities added yet. Click "+ Add Activity" to schedule events, hackathons, and sessions.
                     </div>
                 ) : (
                     <div className="table-responsive">
-                        <table className="table table-dark table-sm align-middle mb-0 fs-8">
-                            <thead>
-                                <tr className="text-muted text-uppercase">
-                                    <th>Day</th>
-                                    <th>Activity Name</th>
-                                    <th>Category</th>
-                                    <th>Time</th>
-                                    <th>Venue</th>
-                                    <th>Capacity</th>
-                                    <th>Reg Prerequisite</th>
-                                    <th className="text-end">Action</th>
+                        <table className="table table-hover table-sm align-middle mb-0 fs-8" style={{ color: "var(--text-main)" }}>
+                            <thead style={{ backgroundColor: "var(--bg-secondary)", borderBottom: "1px solid var(--border-editorial)" }}>
+                                <tr className="text-uppercase" style={{ color: "var(--text-muted)" }}>
+                                    <th style={{ color: "var(--text-muted)" }}>Day</th>
+                                    <th style={{ color: "var(--text-muted)" }}>Activity Name</th>
+                                    <th style={{ color: "var(--text-muted)" }}>Category</th>
+                                    <th style={{ color: "var(--text-muted)" }}>Time</th>
+                                    <th style={{ color: "var(--text-muted)" }}>Venue</th>
+                                    <th style={{ color: "var(--text-muted)" }}>Capacity</th>
+                                    <th style={{ color: "var(--text-muted)" }}>Reg Prerequisite</th>
+                                    <th className="text-end" style={{ color: "var(--text-muted)" }}>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {activities.map((act) => (
-                                    <tr key={act.id}>
-                                        <td><span className="badge bg-secondary">Day {act.dayNumber}</span></td>
-                                        <td className="fw-bold text-white">{act.name}</td>
-                                        <td><span className="badge bg-primary fs-9">{act.category}</span></td>
-                                        <td>{new Date(act.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(act.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                                        <td>{act.venue}</td>
-                                        <td>{act.availableSeats} / {act.maxParticipants} left</td>
-                                        <td>
+                                    <tr key={act.id} style={{ borderBottom: "1px solid var(--border-editorial)" }}>
+                                        <td style={{ borderColor: "var(--border-editorial)" }}><span className="badge bg-secondary">Day {act.dayNumber}</span></td>
+                                        <td className="fw-bold" style={{ borderColor: "var(--border-editorial)", color: "var(--text-main)" }}>{act.name}</td>
+                                        <td style={{ borderColor: "var(--border-editorial)" }}><span className="badge bg-primary fs-9">{act.category}</span></td>
+                                        <td style={{ borderColor: "var(--border-editorial)" }}>{new Date(act.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(act.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                                        <td style={{ borderColor: "var(--border-editorial)" }}>{act.venue}</td>
+                                        <td style={{ borderColor: "var(--border-editorial)" }}>{act.availableSeats} / {act.maxParticipants} left</td>
+                                        <td style={{ borderColor: "var(--border-editorial)" }}>
                                             {act.requiresOverallRegistration ? (
                                                 <span className="badge bg-warning text-dark fs-9">Overall Required</span>
                                             ) : (
                                                 <span className="badge bg-secondary fs-9">Open</span>
                                             )}
                                         </td>
-                                        <td className="text-end">
+                                        <td className="text-end" style={{ borderColor: "var(--border-editorial)" }}>
                                             <button 
                                                 className="btn btn-outline-danger btn-sm py-0 px-2 fs-9"
                                                 onClick={() => {
@@ -877,9 +971,9 @@ function OrganizerSymposiumCard({ symposium }) {
 
             {/* Modal for adding activity */}
             {showAddModal && (
-                <div className="modal fade show d-block" tabIndex="-1" style={{ background: "rgba(0,0,0,0.8)", zIndex: 1060 }}>
+                <div className="modal fade show d-block" tabIndex="-1" style={{ background: "rgba(0,0,0,0.7)", zIndex: 1060 }}>
                     <div className="modal-dialog modal-lg modal-dialog-centered">
-                        <div className="modal-content bg-dark border border-secondary text-white">
+                        <div className="modal-content shadow-lg" style={{ backgroundColor: "var(--bg-card)", color: "var(--text-main)", border: "1px solid var(--border-editorial)", borderRadius: "var(--radius-md)" }}>
                             <form onSubmit={handleCreateActivity}>
                                 <div className="modal-header border-secondary">
                                     <h5 className="modal-title fw-bold">Add Activity to {symposium.title}</h5>
