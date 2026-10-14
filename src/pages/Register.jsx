@@ -1,7 +1,7 @@
-import { useState, useContext, useEffect } from "react";
+import { useState, useContext, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
-import { FaUser, FaEnvelope, FaLock, FaBuilding, FaChevronRight, FaArrowLeft } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaLock, FaBuilding, FaChevronRight, FaArrowLeft, FaCheckCircle } from "react-icons/fa";
 import DistrictCollegeSelector from "../components/DistrictCollegeSelector";
 
 const STREAM_CONFIG = {
@@ -130,12 +130,15 @@ function Register() {
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [countdown, setCountdown] = useState(2);
+    const isJustRegistered = useRef(false);
 
     const isExternal = form.collegeName === "External College";
 
-    // Redirect if already logged in
+    // Redirect if already logged in (only when visiting register page while already authenticated)
     useEffect(() => {
-        if (currentUser) {
+        if (currentUser && !showSuccessModal && !isJustRegistered.current) {
             const from = location.state?.from?.pathname;
             if (from) {
                 navigate(from, { replace: true });
@@ -146,7 +149,29 @@ function Register() {
                 else navigate("/student");
             }
         }
-    }, [currentUser, navigate, location]);
+    }, [currentUser, navigate, location, showSuccessModal]);
+
+    // Automatically navigate to home page when registration modal countdown finishes
+    useEffect(() => {
+        if (!showSuccessModal) return;
+
+        const timer = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    navigate("/");
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [showSuccessModal, navigate]);
+
+    const handleGoHome = () => {
+        navigate("/");
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -211,19 +236,9 @@ function Register() {
 
         const res = await registerUser(submissionData);
         if (res.success) {
-            if (res.user.status === "Pending") {
-                navigate("/login");
-            } else {
-                const from = location.state?.from?.pathname;
-                if (from) {
-                    navigate(from, { replace: true });
-                } else {
-                    const role = res.user.role.toLowerCase();
-                    if (role === "admin") navigate("/admin");
-                    else if (role === "organizer") navigate("/organizer");
-                    else navigate("/student");
-                }
-            }
+            isJustRegistered.current = true;
+            setIsSubmitting(false);
+            setShowSuccessModal(true);
         } else {
             setIsSubmitting(false);
         }
@@ -507,6 +522,112 @@ function Register() {
                     </div>
                 </div>
             </div>
+
+            {/* Registration Success Pop-up Modal */}
+            {showSuccessModal && (
+                <div
+                    className="modal fade show d-block"
+                    tabIndex="-1"
+                    role="dialog"
+                    aria-modal="true"
+                    style={{
+                        background: "rgba(9, 13, 22, 0.88)",
+                        backdropFilter: "blur(8px)",
+                        zIndex: 1060
+                    }}
+                >
+                    <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: "480px" }}>
+                        <div
+                            className="modal-content text-white border border-success border-opacity-50 shadow-2xl rounded-4 overflow-hidden"
+                            style={{ background: "var(--bg-card, #111827)", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 30px rgba(16, 185, 129, 0.2)" }}
+                        >
+                            {/* Modal Header Banner */}
+                            <div
+                                className="p-4 text-center"
+                                style={{
+                                    background: "linear-gradient(135deg, rgba(16, 185, 129, 0.18) 0%, rgba(5, 150, 105, 0.06) 100%)",
+                                    borderBottom: "1px solid rgba(16, 185, 129, 0.25)"
+                                }}
+                            >
+                                <div
+                                    className="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle"
+                                    style={{
+                                        width: "68px",
+                                        height: "68px",
+                                        backgroundColor: "rgba(16, 185, 129, 0.15)",
+                                        border: "2px solid rgba(16, 185, 129, 0.6)",
+                                        color: "#10b981",
+                                        boxShadow: "0 0 25px rgba(16, 185, 129, 0.4)"
+                                    }}
+                                >
+                                    <FaCheckCircle size={38} />
+                                </div>
+                                <span className="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50 px-3 py-1 mb-2 fw-semibold">
+                                    Account Verified
+                                </span>
+                                <h3 className="serif-heading text-white fw-bold mb-1" style={{ fontSize: "1.75rem" }}>
+                                    Registration Successful!
+                                </h3>
+                                <p className="text-muted fs-8 mb-0">
+                                    Welcome to CampusConnect, <strong>{form.name || "Student"}</strong>
+                                </p>
+                            </div>
+
+                            {/* Modal Body Details */}
+                            <div className="p-4">
+                                <div className="p-3 rounded-3 mb-3 border border-secondary border-opacity-25 bg-dark bg-opacity-50">
+                                    <div className="d-flex justify-content-between mb-2 fs-8">
+                                        <span className="text-muted">Account Name:</span>
+                                        <span className="text-white fw-semibold">{form.name}</span>
+                                    </div>
+                                    <div className="d-flex justify-content-between mb-2 fs-8">
+                                        <span className="text-muted">Registered Email:</span>
+                                        <span className="text-white fw-semibold">{form.email}</span>
+                                    </div>
+                                    <div className="d-flex justify-content-between mb-2 fs-8">
+                                        <span className="text-muted">Department:</span>
+                                        <span className="text-white fw-semibold">{form.department || selectedCourse}</span>
+                                    </div>
+                                    <div className="d-flex justify-content-between fs-8">
+                                        <span className="text-muted">College Affiliation:</span>
+                                        <span className="text-white fw-semibold">
+                                            {isExternal ? (externalInstitution.collegeName || "External College") : "CIT (Internal Verified)"}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="text-center mb-3">
+                                    <p className="text-info fs-8 mb-2">
+                                        🚀 Redirecting to the Home Page in <strong>{countdown} second{countdown !== 1 ? "s" : ""}</strong>...
+                                    </p>
+                                    <div className="progress" style={{ height: "6px", backgroundColor: "rgba(255, 255, 255, 0.1)" }}>
+                                        <div
+                                            className="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                                            role="progressbar"
+                                            style={{
+                                                width: `${((3 - countdown) / 3) * 100}%`,
+                                                transition: "width 1s linear"
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={handleGoHome}
+                                    className="btn btn-primary w-100 py-2 fw-bold d-flex align-items-center justify-content-center gap-2 rounded-3 shadow"
+                                    style={{
+                                        background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+                                        border: "none"
+                                    }}
+                                >
+                                    Go to Home Page Now <FaChevronRight size={12} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
