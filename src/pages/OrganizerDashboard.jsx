@@ -172,17 +172,16 @@ function OrganizerDashboard() {
         }
 
         setIsAssigning(true);
-        // Assuming assignVolunteer is updated to be async in context
-        const success = await assignVolunteer(Number(selectedVolunteerEvent), Number(selectedVolunteerStudent));
+        const result = await assignVolunteer(Number(selectedVolunteerEvent), Number(selectedVolunteerStudent));
+        const isSuccess = result === true || result?.success === true;
         
-        if (success) {
+        if (isSuccess) {
             setVolunteerFormSuccess("Volunteer assigned successfully!");
             setSelectedVolunteerEvent("");
             setSelectedVolunteerStudent("");
-            // Clear success message after 3 seconds
-            setTimeout(() => setVolunteerFormSuccess(""), 3000);
+            setTimeout(() => setVolunteerFormSuccess(""), 4000);
         } else {
-            setVolunteerFormError("Failed to assign volunteer. They may already be registered or the event is full.");
+            setVolunteerFormError(result?.error || "Failed to assign volunteer. They may already be registered or the event is full.");
         }
         setIsAssigning(false);
     };
@@ -281,7 +280,34 @@ function OrganizerDashboard() {
 
     const getStudentDetails = (studentId) => users.find(u => u.id === studentId);
     const getEventDetails = (eventId) => events.find(e => e.id === eventId);
-    const studentUsers = users.filter(u => u.role === "Student");
+    const selectedEventObj = events.find(e => String(e.id) === String(selectedVolunteerEvent));
+
+    const eligibleVolunteerStudents = users.filter(u => {
+        const role = (u.role || "").toLowerCase();
+        if (role !== "student") return false;
+
+        // Rule 1: Strictly no other/external college students as volunteers
+        if (u.affiliationStatus === "EXTERNAL") return false;
+        const college = (u.collegeName || "").toLowerCase().trim();
+        if (college) {
+            const isCit = college.includes("coimbatore institute of technology") || college === "cit" || college === "our college";
+            if (!isCit) return false;
+        }
+
+        // Rule 2: Department students are the only ones that can volunteer for that symposium/department event
+        if (selectedEventObj && selectedEventObj.department) {
+            const evtDept = selectedEventObj.department.toLowerCase().trim();
+            const isClubOrGeneral = ["club", "cell", "dramatix", "muthamizh", "mandram", "society", "general"].some(k => evtDept.includes(k));
+            if (!isClubOrGeneral) {
+                const studDept = (u.department || "").toLowerCase().trim();
+                if (studDept !== evtDept) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    });
 
     return (
         <DashboardLayout
@@ -470,34 +496,61 @@ function OrganizerDashboard() {
                                     id="volEvent"
                                     className="form-select fs-7" 
                                     value={selectedVolunteerEvent}
-                                    onChange={(e) => setSelectedVolunteerEvent(e.target.value)}
+                                    onChange={(e) => {
+                                        setSelectedVolunteerEvent(e.target.value);
+                                        setSelectedVolunteerStudent(""); // Reset student selection on event switch
+                                        setVolunteerFormError("");
+                                        setVolunteerFormSuccess("");
+                                    }}
                                     disabled={isAssigning}
                                     required
                                 >
                                     <option value="">-- Choose Managed Event --</option>
                                     {displayEvents.map(e => (
-                                        <option key={e.id} value={e.id}>{e.title} ({e.date})</option>
+                                        <option key={e.id} value={e.id}>
+                                            {e.title} ({e.date}) {e.department ? `[${e.department}]` : ''}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
                             <div className="col-md-5">
-                                <label htmlFor="volStudent" className="form-label text-white fs-8 fw-semibold mb-1">Select Student <span className="text-danger">*</span></label>
+                                <div className="d-flex justify-content-between align-items-center mb-1">
+                                    <label htmlFor="volStudent" className="form-label text-white fs-8 fw-semibold mb-0">Select Student <span className="text-danger">*</span></label>
+                                    {selectedEventObj && (
+                                        <span className="badge bg-info bg-opacity-25 text-info fs-9 border border-info border-opacity-25">
+                                            {selectedEventObj.department || "Internal CIT Only"}
+                                        </span>
+                                    )}
+                                </div>
                                 <select 
                                     id="volStudent"
                                     className="form-select fs-7" 
                                     value={selectedVolunteerStudent}
                                     onChange={(e) => setSelectedVolunteerStudent(e.target.value)}
-                                    disabled={isAssigning}
+                                    disabled={isAssigning || !selectedVolunteerEvent}
                                     required
                                 >
-                                    <option value="">-- Search & Choose Student --</option>
-                                    {studentUsers.map(u => (
-                                        <option key={u.id} value={u.id}>{u.name} ({u.rollNumber || 'No Roll'}) - {u.department}</option>
-                                    ))}
+                                    {!selectedVolunteerEvent ? (
+                                        <option value="">-- Please select an event first --</option>
+                                    ) : eligibleVolunteerStudents.length === 0 ? (
+                                        <option value="">-- No eligible department students found --</option>
+                                    ) : (
+                                        <>
+                                            <option value="">-- Select Student ({eligibleVolunteerStudents.length} available) --</option>
+                                            {eligibleVolunteerStudents.map(u => (
+                                                <option key={u.id} value={u.id}>
+                                                    {u.name} ({u.rollNumber || 'No Roll'}) - {u.department}
+                                                </option>
+                                            ))}
+                                        </>
+                                    )}
                                 </select>
+                                <div className="form-text fs-9 text-muted mt-1">
+                                    <span className="text-warning">●</span> Only verified CIT {selectedEventObj?.department ? `${selectedEventObj.department} students` : 'department students'} can volunteer. External students are not eligible.
+                                </div>
                             </div>
                             <div className="col-md-2">
-                                <button type="submit" disabled={isAssigning} className="btn btn-info w-100 fw-bold d-flex justify-content-center align-items-center gap-2">
+                                <button type="submit" disabled={isAssigning || !selectedVolunteerEvent || !selectedVolunteerStudent} className="btn btn-info w-100 fw-bold d-flex justify-content-center align-items-center gap-2">
                                     {isAssigning ? <span className="spinner-border spinner-border-sm"></span> : "Assign"}
                                 </button>
                             </div>

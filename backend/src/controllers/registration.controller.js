@@ -481,6 +481,35 @@ const assignVolunteer = async (req, res, next) => {
         const student = await prisma.user.findUnique({ where: { id: studentId } });
         if (!student) return res.status(404).json({ success: false, error: 'Student not found.' });
 
+        // Rule 1: No other/external college students can volunteer
+        const isExternal = student.affiliationStatus === 'EXTERNAL' ||
+            (student.collegeName && 
+             !student.collegeName.toLowerCase().includes('coimbatore institute of technology') && 
+             student.collegeName.toLowerCase() !== 'cit' && 
+             student.collegeName.toLowerCase() !== 'our college');
+
+        if (isExternal) {
+            return res.status(403).json({ 
+                success: false, 
+                error: 'External college students are not permitted to be assigned as volunteers.' 
+            });
+        }
+
+        // Rule 2: Only department students can volunteer for that symposium / department event
+        if (event.department) {
+            const isClubOrGeneral = ['club', 'cell', 'dramatix', 'muthamizh', 'mandram', 'society', 'general'].some(k => event.department.toLowerCase().includes(k));
+            if (!isClubOrGeneral) {
+                const eventDept = event.department.trim().toLowerCase();
+                const studentDept = (student.department || '').trim().toLowerCase();
+                if (eventDept !== studentDept) {
+                    return res.status(403).json({ 
+                        success: false, 
+                        error: `Only students from ${event.department} can be assigned as volunteers for this symposium/event.` 
+                    });
+                }
+            }
+        }
+
         const registration = await prisma.$transaction(async (tx) => {
             const existing = await tx.registration.findUnique({
                 where: { userId_eventId: { userId: studentId, eventId } }
@@ -551,8 +580,27 @@ const assignVolunteer = async (req, res, next) => {
 // 8. Get Student List for Volunteer Selection (Organizer / Admin)
 const getStudentsList = async (req, res, next) => {
     try {
+        const { eventId, department } = req.query;
+        let whereCondition = {
+            role: 'STUDENT',
+            isActive: true,
+            affiliationStatus: { not: 'EXTERNAL' }
+        };
+
+        if (department) {
+            whereCondition.department = department;
+        } else if (eventId) {
+            const event = await prisma.event.findUnique({ where: { id: parseInt(eventId, 10) } });
+            if (event && event.department) {
+                const isClubOrGeneral = ['club', 'cell', 'dramatix', 'muthamizh', 'mandram', 'society', 'general'].some(k => event.department.toLowerCase().includes(k));
+                if (!isClubOrGeneral) {
+                    whereCondition.department = event.department;
+                }
+            }
+        }
+
         const students = await prisma.user.findMany({
-            where: { role: 'STUDENT', isActive: true },
+            where: whereCondition,
             select: {
                 id: true,
                 name: true,
@@ -565,7 +613,20 @@ const getStudentsList = async (req, res, next) => {
             },
             orderBy: { name: 'asc' }
         });
-        res.status(200).json({ success: true, students });
+
+        // Filter out any external college students that might have a non-CIT collegeName
+        const internalStudents = students.filter(s => {
+            if (s.affiliationStatus === 'EXTERNAL') return false;
+            if (s.collegeName) {
+                const c = s.collegeName.toLowerCase();
+                if (!c.includes('coimbatore institute of technology') && c !== 'cit' && c !== 'our college') {
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        res.status(200).json({ success: true, students: internalStudents });
     } catch (error) {
         next(error);
     }
