@@ -488,7 +488,7 @@ const events = [
             category: "Undergraduate Programmes",
             description: "Department of Chemical Engineering advancing chemical processes, biotechnology, and materials science."
         },
-        image: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80",
+        image: "/aavishkar.png",
         trending: false,
         description: "National technical symposium hosted by the Department of Chemical Engineering at CIT. Featuring process simulation hackathons in DWSIM/Aspen, Chem-E-Car reaction vehicle derbies, green hydrogen paper conclaves, and pilot plant tours.",
         coordinatorName: "Dr. K. Raman",

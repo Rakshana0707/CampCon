@@ -372,6 +372,7 @@ async function seedEvents() {
             numberOfDays: 2,
             externalParticipationAllowed: true,
             eligibleParticipants: 'Chemical Engineering, Biotechnology, Petroleum, Food Tech, and Polymer science scholars',
+            image: '/aavishkar.png',
             isDemo: true,
             contactPerson: 'Dr. K. Raman / Aavishkar Faculty Secretary',
             contactEmail: 'aavishkar2k26@college.edu',
