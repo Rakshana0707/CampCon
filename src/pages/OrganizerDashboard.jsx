@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import DashboardLayout from "../layouts/DashboardLayout";
 import OrganizerEventCard from "../components/OrganizerEventCard";
-import { FaPlus, FaBriefcase, FaCalendarAlt, FaChartPie, FaChartBar, FaUserCheck, FaHandsHelping, FaCheck, FaTimes, FaUsers, FaQrcode, FaSearch, FaTrash } from "react-icons/fa";
+import { FaPlus, FaBriefcase, FaCalendarAlt, FaChartPie, FaChartBar, FaUserCheck, FaHandsHelping, FaCheck, FaTimes, FaUsers, FaQrcode, FaSearch, FaTrash, FaGraduationCap, FaCalendarCheck } from "react-icons/fa";
 
 // Import Chart.js and register components
 import {
@@ -578,7 +578,15 @@ function OrganizerDashboard() {
                         </form>
                     </div>
 
-                    <h5 className="text-white mb-3 fw-bold fs-5" style={{ fontFamily: "var(--font-heading)" }}>Assigned Team</h5>
+                    <div className="d-flex align-items-center justify-content-between mb-3">
+                        <h5 className="text-white mb-0 fw-bold fs-5 d-flex align-items-center gap-2" style={{ fontFamily: "var(--font-heading)" }}>
+                            <FaHandsHelping className="text-info" /> Assigned Team
+                            <span className="badge bg-secondary bg-opacity-25 text-info fs-8 fw-semibold px-2.5 py-1 rounded-pill border border-info border-opacity-25 ms-1">
+                                {assignedVolunteersList.length} Active
+                            </span>
+                        </h5>
+                    </div>
+
                     {assignedVolunteersList.length === 0 ? (
                         <div className="empty-state mt-2">
                             <FaUsers />
@@ -596,28 +604,102 @@ function OrganizerDashboard() {
                                 const studentDept = student?.department || vol.studentDepartment || vol.user?.department || "Student";
 
                                 return (
-                                    <div key={vol.id} className="col-md-6">
-                                        <div className="glass-panel p-3 d-flex align-items-center justify-content-between gap-3 border border-secondary border-opacity-30">
-                                            <div className="d-flex align-items-center gap-3">
-                                                <div className="bg-info bg-opacity-25 text-info p-3 rounded-circle">
-                                                    <FaHandsHelping size={24} />
+                                    <div key={vol.id} className="col-lg-6 col-12">
+                                        <div 
+                                            className="glass-panel p-3 h-100 d-flex flex-column justify-content-between rounded-3 border border-secondary border-opacity-25 shadow-sm"
+                                            style={{
+                                                background: "rgba(15, 23, 42, 0.65)",
+                                                backdropFilter: "blur(12px)",
+                                                transition: "all 0.2s ease"
+                                            }}
+                                        >
+                                            {/* Top Row: Avatar + Student info + Remove button */}
+                                            <div className="d-flex align-items-start justify-content-between gap-3">
+                                                <div className="d-flex align-items-center gap-3 min-w-0">
+                                                    <div 
+                                                        className="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                                                        style={{ 
+                                                            width: "44px", 
+                                                            height: "44px", 
+                                                            background: "linear-gradient(135deg, rgba(6, 182, 212, 0.18) 0%, rgba(99, 102, 241, 0.18) 100%)",
+                                                            border: "1px solid rgba(6, 182, 212, 0.35)",
+                                                            color: "#38bdf8"
+                                                        }}
+                                                    >
+                                                        <FaHandsHelping size={20} />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <div className="d-flex align-items-center gap-2 flex-wrap mb-1">
+                                                            <h6 className="text-white fw-bold mb-0 fs-6 text-truncate" title={studentName}>
+                                                                {studentName}
+                                                            </h6>
+                                                            <span 
+                                                                className="badge px-2 py-0.5 fs-9 fw-semibold rounded-pill"
+                                                                style={{
+                                                                    backgroundColor: "rgba(255, 255, 255, 0.08)",
+                                                                    border: "1px solid rgba(255, 255, 255, 0.15)",
+                                                                    color: "#94a3b8"
+                                                                }}
+                                                            >
+                                                                {studentRoll}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-secondary fs-8 mb-0 d-flex align-items-center gap-1.5 text-truncate" title={studentDept}>
+                                                            <FaGraduationCap size={13} className="text-info flex-shrink-0" />
+                                                            <span className="text-truncate">{studentDept}</span>
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <h6 className="text-white fw-bold mb-1">{studentName}</h6>
-                                                    <p className="text-muted fs-8 mb-1">{studentRoll} • {studentDept}</p>
-                                                    <span className="badge bg-primary bg-opacity-25 text-light fs-9 border border-primary border-opacity-50">
-                                                        Event: {event.title}
-                                                    </span>
-                                                </div>
+
+                                                {/* Remove Action Button */}
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-sm d-flex align-items-center gap-1.5 px-2.5 py-1.5 fs-8 rounded-pill flex-shrink-0"
+                                                    style={{
+                                                        backgroundColor: "rgba(239, 68, 68, 0.1)",
+                                                        border: "1px solid rgba(239, 68, 68, 0.28)",
+                                                        color: "#f87171",
+                                                        transition: "all 0.18s ease"
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.22)";
+                                                        e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.55)";
+                                                        e.currentTarget.style.color = "#ffffff";
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.1)";
+                                                        e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.28)";
+                                                        e.currentTarget.style.color = "#f87171";
+                                                    }}
+                                                    onClick={() => handleRemoveVolunteer(vol)}
+                                                    title={`Remove ${studentName} as volunteer`}
+                                                >
+                                                    <FaTrash size={11} /> <span>Remove</span>
+                                                </button>
                                             </div>
-                                            <button
-                                                type="button"
-                                                className="btn btn-outline-danger btn-sm d-flex align-items-center gap-1 py-1 px-3 fs-8 flex-shrink-0"
-                                                onClick={() => handleRemoveVolunteer(vol)}
-                                                title={`Remove ${studentName} as volunteer`}
+
+                                            {/* Bottom Strip: Assigned Event */}
+                                            <div 
+                                                className="mt-3 pt-2.5 d-flex align-items-center justify-content-between flex-wrap gap-2"
+                                                style={{ borderTop: "1px solid rgba(255, 255, 255, 0.07)" }}
                                             >
-                                                <FaTrash size={12} /> Remove
-                                            </button>
+                                                <div className="d-flex align-items-center gap-1.5 fs-8 text-secondary">
+                                                    <FaCalendarCheck size={12} className="text-info flex-shrink-0" />
+                                                    <span>Assigned Event:</span>
+                                                </div>
+                                                <span 
+                                                    className="badge px-2.5 py-1 fs-8 fw-semibold rounded-pill text-truncate"
+                                                    style={{ 
+                                                        maxWidth: "280px",
+                                                        backgroundColor: "rgba(99, 102, 241, 0.16)",
+                                                        border: "1px solid rgba(99, 102, 241, 0.32)",
+                                                        color: "#c7d2fe"
+                                                    }}
+                                                    title={event.title}
+                                                >
+                                                    {event.title}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 );
