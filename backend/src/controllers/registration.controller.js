@@ -462,13 +462,21 @@ const updateRegistrationStatus = async (req, res, next) => {
 };
 
 // 7. Assign Student as Volunteer (Organizer or Admin)
+const normalizeDept = (dept) => {
+    if (!dept) return "";
+    return dept.toLowerCase()
+        .replace(/^(b\.?e\.?|b\.?tech\.?|m\.?e\.?|m\.?tech\.?|department of)\s*/i, "")
+        .replace(/\s+/g, " ")
+        .trim();
+};
+
 const assignVolunteer = async (req, res, next) => {
     try {
         const eventId = parseInt(req.body.eventId || req.params.eventId, 10);
-        const studentId = parseInt(req.body.studentId || req.body.userId, 10);
+        let studentId = parseInt(req.body.studentId || req.body.userId, 10);
 
-        if (!eventId || !studentId) {
-            return res.status(400).json({ success: false, error: 'Both eventId and studentId are required.' });
+        if (!eventId) {
+            return res.status(400).json({ success: false, error: 'Event ID is required.' });
         }
 
         const event = await prisma.event.findUnique({ where: { id: eventId } });
@@ -478,8 +486,30 @@ const assignVolunteer = async (req, res, next) => {
             return res.status(403).json({ success: false, error: 'Unauthorized to assign volunteers for this event.' });
         }
 
-        const student = await prisma.user.findUnique({ where: { id: studentId } });
+        let student = studentId ? await prisma.user.findUnique({ where: { id: studentId } }) : null;
+        if (!student && req.body.studentEmail) {
+            student = await prisma.user.findUnique({ where: { email: req.body.studentEmail } });
+        }
+        if (!student && req.body.studentName) {
+            const bcrypt = require('bcryptjs');
+            const pwdHash = await bcrypt.hash('password123', 10);
+            student = await prisma.user.create({
+                data: {
+                    name: req.body.studentName,
+                    email: req.body.studentEmail || `student.${Date.now()}@college.edu`,
+                    department: req.body.department || event.department,
+                    rollNumber: req.body.rollNumber || `23${Date.now().toString().slice(-5)}`,
+                    role: 'STUDENT',
+                    affiliationStatus: 'INTERNAL_VERIFIED',
+                    collegeName: 'Coimbatore Institute of Technology',
+                    isActive: true,
+                    passwordHash: pwdHash
+                }
+            });
+        }
+
         if (!student) return res.status(404).json({ success: false, error: 'Student not found.' });
+        studentId = student.id;
 
         // Rule 1: No other/external college students can volunteer
         const isExternal = student.affiliationStatus === 'EXTERNAL' ||
@@ -499,9 +529,9 @@ const assignVolunteer = async (req, res, next) => {
         if (event.department) {
             const isClubOrGeneral = ['club', 'cell', 'dramatix', 'muthamizh', 'mandram', 'society', 'general'].some(k => event.department.toLowerCase().includes(k));
             if (!isClubOrGeneral) {
-                const eventDept = event.department.trim().toLowerCase();
-                const studentDept = (student.department || '').trim().toLowerCase();
-                if (eventDept !== studentDept) {
+                const normEvt = normalizeDept(event.department);
+                const normStud = normalizeDept(student.department);
+                if (normEvt && normStud && normEvt !== normStud && !normEvt.includes(normStud) && !normStud.includes(normEvt)) {
                     return res.status(403).json({ 
                         success: false, 
                         error: `Only students from ${event.department} can be assigned as volunteers for this symposium/event.` 

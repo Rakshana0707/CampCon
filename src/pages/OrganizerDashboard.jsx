@@ -282,6 +282,14 @@ function OrganizerDashboard() {
     const getEventDetails = (eventId) => events.find(e => e.id === eventId);
     const selectedEventObj = events.find(e => String(e.id) === String(selectedVolunteerEvent));
 
+    const normalizeDept = (dept) => {
+        if (!dept) return "";
+        return dept.toLowerCase()
+            .replace(/^(b\.?e\.?|b\.?tech\.?|m\.?e\.?|m\.?tech\.?|department of)\s*/i, "")
+            .replace(/\s+/g, " ")
+            .trim();
+    };
+
     const eligibleVolunteerStudents = users.filter(u => {
         const role = (u.role || "").toLowerCase();
         if (role !== "student") return false;
@@ -299,8 +307,9 @@ function OrganizerDashboard() {
             const evtDept = selectedEventObj.department.toLowerCase().trim();
             const isClubOrGeneral = ["club", "cell", "dramatix", "muthamizh", "mandram", "society", "general"].some(k => evtDept.includes(k));
             if (!isClubOrGeneral) {
-                const studDept = (u.department || "").toLowerCase().trim();
-                if (studDept !== evtDept) {
+                const normEvt = normalizeDept(selectedEventObj.department);
+                const normStud = normalizeDept(u.department);
+                if (normEvt && normStud && normEvt !== normStud && !normEvt.includes(normStud) && !normStud.includes(normEvt)) {
                     return false;
                 }
             }
