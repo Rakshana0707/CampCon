@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect } from "react";
 import api from "../services/api"; // Central API Service
 import defaultEvents from "../data/events";
+import { deduplicateEvents } from "../utils/helpers";
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const AppContext = createContext();
@@ -104,7 +105,7 @@ export function AppContextProvider({ children }) {
     const [currentUser, setCurrentUser] = useState(() => normalizeUser(safeJSONParse("campcon_current_user", null)));
     
     // Core Data States
-    const [events, setEvents] = useState(defaultEvents);
+    const [events, setEvents] = useState(() => deduplicateEvents(defaultEvents));
     const [users, setUsers] = useState(DEFAULT_STUDENTS);
     const [notifications, setNotifications] = useState([]);
     const [bookmarks, setBookmarks] = useState([]);
@@ -182,15 +183,12 @@ export function AppContextProvider({ children }) {
                     externalRegOpensAt: e.externalRegOpensAt ? new Date(e.externalRegOpensAt).toISOString().split('T')[0] : "",
                     externalRegOpensTime: e.externalRegOpensAt ? new Date(e.externalRegOpensAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ""
                 }));
-                if (mappedEvents.length > 0) {
-                    setEvents(mappedEvents);
-                } else {
-                    setEvents(defaultEvents);
-                }
+                const rawList = mappedEvents.length > 0 ? mappedEvents : defaultEvents;
+                setEvents(deduplicateEvents(rawList));
             }
         } catch (error) {
             console.error("Failed to fetch events from API, using default catalog:", error);
-            setEvents(defaultEvents);
+            setEvents(deduplicateEvents(defaultEvents));
         } finally {
             setIsLoading(false);
         }
@@ -934,7 +932,7 @@ export function AppContextProvider({ children }) {
                 deadline: eventData.deadline || eventData.date,
                 activities: []
             };
-            setEvents(prev => [fallbackEvent, ...prev]);
+            setEvents(prev => deduplicateEvents([fallbackEvent, ...prev]));
             showToast("Event published successfully!", "success");
             return fallbackEvent;
         }

@@ -320,7 +320,8 @@ function CreateEvent() {
         }
 
         setIsSubmitting(true);
-        const finalImage = form.image.trim() !== "" ? form.image : getFallbackImage(form.category);
+        const usedImages = new Set((events || []).map(e => e.image).filter(Boolean));
+        const finalImage = form.image.trim() !== "" ? form.image : getFallbackImage(form.category, form.title || Date.now(), usedImages);
 
         const eventData = {
             ...form,
