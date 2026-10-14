@@ -41,9 +41,13 @@ function EventCard({ event }) {
                 <div className="event-card">
                     <div className="event-image">
                         <img
-                            src={event.image || getFallbackImage(event.category)}
+                            src={event.image || getFallbackImage(event.category, event.id || event.title)}
                             alt={`${event.title} artwork`}
                             loading="lazy"
+                            onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = getFallbackImage(event.category, event.id || event.title);
+                            }}
                         />
 
                         {/* Top Badges */}

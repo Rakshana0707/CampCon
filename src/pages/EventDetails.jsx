@@ -373,10 +373,14 @@ function EventDetails() {
                 <div className="col-lg-8">
                     <div className="position-relative mb-4">
                         <img
-                            src={event.image || getFallbackImage(event.category)}
+                            src={event.image || getFallbackImage(event.category, event.id || event.title)}
                             className="img-fluid w-100 rounded-4 shadow-lg"
                             alt={event.title}
                             style={{ height: "400px", objectFit: "cover" }}
+                            onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = getFallbackImage(event.category, event.id || event.title);
+                            }}
                         />
                         <div className="position-absolute bottom-3 left-3 m-3 d-flex gap-2 flex-wrap">
                             <span className="badge bg-primary text-white px-3 py-2 fs-6 shadow">

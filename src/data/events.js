@@ -33,7 +33,7 @@ const events = [
             category: "Undergraduate Programmes",
             description: "Department of CSE driving innovations in software engineering, computing, and cybersecurity."
         },
-        image: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80",
+        image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80",
         trending: true,
         description: "Premier national-level 2-day technical and cultural symposium hosted by the Department of Computer Science and Engineering. Featuring 10 multi-track challenges spanning coding duels, zero-day capture-the-flag, web hackathons, gaming tournaments, movie trivia, and anime cosplay.",
         coordinatorName: "Prof. S. Anand",
@@ -249,7 +249,7 @@ const events = [
             category: "Cultural & Arts",
             description: "Campus melodies, classical, acoustic, and contemporary musical performances."
         },
-        image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80",
+        image: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80",
         trending: true,
         description: "An electrifying musical twilight featuring live unplugged acoustic sets, violin solos, rock covers, and indie fusion performed by student bands across all batches. Food trucks, neon installations, and open-mic segments included.",
         coordinatorName: "Karthik R (Lead Guitarist)",
@@ -297,7 +297,7 @@ const events = [
             category: "Undergraduate Programmes",
             description: "Department of EEE excelling in power systems, renewable energy, and control engineering."
         },
-        image: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=800&q=80",
+        image: "https://images.unsplash.com/photo-1517420704952-d9f39e95b43e?auto=format&fit=crop&w=800&q=80",
         trending: false,
         description: "Flagship national-level technical symposium organized by the Department of Electrical and Electronics Engineering at CIT. Spotlighting high-speed Robo Tracer autonomous races, PCB hardware debugging, smart microgrid architectures, and quiz championships.",
         coordinatorName: "Dr. V. Narayanan",
@@ -393,7 +393,7 @@ const events = [
             category: "Cultural & Arts",
             description: "The premier theater, street play, and theatrical performance group."
         },
-        image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80",
+        image: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=800&q=80",
         trending: true,
         description: "A grand inter-college cultural showcase celebrating theatrical expression, thematic Western and Classical dance troupes, mime acts, and socio-dramatic street plays from top collegiate teams.",
         coordinatorName: "Sanjana V (Dramatix President)",
@@ -441,7 +441,7 @@ const events = [
             category: "Technical",
             description: "Promoting cybersecurity awareness, ethical hacking, CTF competitions, and online safety."
         },
-        image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80",
+        image: "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80",
         trending: true,
         description: "An 8-hour live offensive & defensive capture-the-flag hackathon covering web app vulnerability analysis, memory forensics, steganography, and cryptography challenges designed by industry red-teamers.",
         coordinatorName: "Aditya Mohan",
@@ -568,7 +568,7 @@ const events = [
             category: "Language & Heritage",
             description: "Celebrating Tamil culture, literature, traditional arts, and festival gatherings."
         },
-        image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=800&q=80",
+        image: "https://images.unsplash.com/photo-1609137144820-ea379447c234?auto=format&fit=crop&w=800&q=80",
         trending: false,
         description: "A cultural evening celebrating classical and folk Tamil literature, dramatic oratory, kavithai recitation, traditional Parai Isai performances, and the grand annual student Pattimandram debate.",
         coordinatorName: "Selvan M. Thangavel",
@@ -614,7 +614,7 @@ const events = [
             category: "Undergraduate Programmes",
             description: "Department of IT focusing on cloud computing, web technologies, and enterprise architecture."
         },
-        image: "https://images.unsplash.com/photo-1544928147-79a2dbc1f389?auto=format&fit=crop&w=800&q=80",
+        image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=800&q=80",
         trending: true,
         description: "An intensive single-day technical masterclass exploring prompt engineering, retrieval-augmented generation (RAG) with vector databases, and fine-tuning open-source models for student developers.",
         coordinatorName: "Prof. M. Karthik",
@@ -661,7 +661,7 @@ const events = [
             category: "Undergraduate Programmes",
             description: "Department of CSE driving innovations in software engineering, computing, and cybersecurity."
         },
-        image: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80",
+        image: "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=800&q=80",
         trending: true,
         description: "An intensive intra-college internal hackathon challenging CIT student teams across all departments to develop smart campus web applications, canteen queuing optimizers, and automated hostel pass systems.",
         coordinatorName: "Prof. S. Anand",
@@ -709,7 +709,7 @@ const events = [
             category: "Cultural & Arts",
             description: "Campus melodies, classical, acoustic, and contemporary musical performances."
         },
-        image: "https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&w=800&q=80",
+        image: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=800&q=80",
         trending: false,
         description: "Annual internal campus music battle pitting 1st, 2nd, 3rd, and final year student bands against each other in genres including Carnatic fusion, indie rock, cinematic mashups, and percussion solo battles.",
         coordinatorName: "Karthik R",
@@ -756,7 +756,7 @@ const events = [
             category: "Undergraduate Programmes",
             description: "Department of EEE excelling in power systems, renewable energy, and control engineering."
         },
-        image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80",
+        image: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
         trending: false,
         description: "Hands-on intra-college embedded engineering competition where student pairs race against the clock to wire sensor networks on breadboards, eliminate IC bugs, and transmit real-time telemetry over ESP32 Wi-Fi.",
         coordinatorName: "Dr. V. Narayanan",
@@ -803,7 +803,7 @@ const events = [
             category: "Cultural & Arts",
             description: "The premier theater, street play, and theatrical performance group."
         },
-        image: "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=800&q=80",
+        image: "https://images.unsplash.com/photo-1460723237483-7a6dc9d0b212?auto=format&fit=crop&w=800&q=80",
         trending: false,
         description: "High-energy intra-college street theatre showcase bringing student troupes together in the central quad to perform original sketches, satirical campus spoofs, social awareness nukkad natak, and synchronized mime acts.",
         coordinatorName: "Sanjana V",

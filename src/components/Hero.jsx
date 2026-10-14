@@ -30,7 +30,7 @@ function Hero({ featuredEvent }) {
     }
 
     const isInterCollege = featuredEvent.eventType === "INTER_COLLEGE";
-    const eventImage = featuredEvent.image || getFallbackImage(featuredEvent.category);
+    const eventImage = featuredEvent.image || getFallbackImage(featuredEvent.category, featuredEvent.id || featuredEvent.title);
     const dateFormatted = featuredEvent.date ? new Date(featuredEvent.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Upcoming";
     const organizerName = featuredEvent.organizingEntityName || featuredEvent.department || "Official College Entity";
 
