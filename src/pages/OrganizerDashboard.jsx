@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import DashboardLayout from "../layouts/DashboardLayout";
 import OrganizerEventCard from "../components/OrganizerEventCard";
-import { FaPlus, FaBriefcase, FaCalendarAlt, FaChartPie, FaChartBar, FaUserCheck, FaHandsHelping, FaCheck, FaTimes, FaUsers, FaQrcode, FaSearch } from "react-icons/fa";
+import { FaPlus, FaBriefcase, FaCalendarAlt, FaChartPie, FaChartBar, FaUserCheck, FaHandsHelping, FaCheck, FaTimes, FaUsers, FaQrcode, FaSearch, FaTrash } from "react-icons/fa";
 
 // Import Chart.js and register components
 import {
@@ -38,6 +38,7 @@ function OrganizerDashboard() {
         approveRegistration, 
         rejectRegistration, 
         assignVolunteer,
+        removeVolunteer,
         markAttendance
     } = useContext(AppContext);
     
@@ -75,9 +76,9 @@ function OrganizerDashboard() {
     // Identify registrations relating to this organizer's events
     const myRegistrations = registrations.filter(r => myEventIds.some(id => String(id) === String(r.eventId)));
 
-    const pendingRequests = myRegistrations.filter(r => r.status === "Pending");
-    const approvedRegistrations = myRegistrations.filter(r => r.status === "Approved" && r.role !== "Volunteer");
-    const assignedVolunteersList = myRegistrations.filter(r => r.role === "Volunteer" && r.status !== "Cancelled" && r.status !== "Rejected");
+    const pendingRequests = myRegistrations.filter(r => r.status?.toLowerCase() === "pending");
+    const approvedRegistrations = myRegistrations.filter(r => r.status?.toLowerCase() === "approved" && r.role?.toLowerCase() !== "volunteer");
+    const assignedVolunteersList = myRegistrations.filter(r => r.role?.toLowerCase() === "volunteer" && r.status?.toLowerCase() !== "cancelled" && r.status?.toLowerCase() !== "rejected");
     const totalValidRegistrations = pendingRequests.length + approvedRegistrations.length + assignedVolunteersList.length;
 
     // Simulated Revenue (e.g. 150 per reg)
@@ -184,6 +185,17 @@ function OrganizerDashboard() {
             setVolunteerFormError(result?.error || "Failed to assign volunteer. They may already be registered or the event is full.");
         }
         setIsAssigning(false);
+    };
+
+    const handleRemoveVolunteer = async (vol) => {
+        const student = getStudentDetails(vol.studentId || vol.userId);
+        const event = getEventDetails(vol.eventId);
+        const studentName = student?.name || vol.studentName || vol.user?.name || "this student";
+        const eventTitle = event?.title || "the event";
+
+        if (window.confirm(`Are you sure you want to remove ${studentName} as a volunteer for "${eventTitle}"?`)) {
+            await removeVolunteer(vol.id, vol.eventId, vol.studentId || vol.userId);
+        }
     };
 
     const handleScan = async (e) => {
@@ -576,26 +588,36 @@ function OrganizerDashboard() {
                     ) : (
                         <div className="row g-3">
                             {assignedVolunteersList.map(vol => {
-                                const student = getStudentDetails(vol.studentId);
+                                const student = getStudentDetails(vol.studentId || vol.userId);
                                 const event = getEventDetails(vol.eventId);
                                 if (!event) return null;
-                                const studentName = student?.name || vol.studentName || "Student";
-                                const studentRoll = student?.rollNumber || vol.studentRollNumber || "23MX101";
-                                const studentDept = student?.department || vol.studentDepartment || "Student";
+                                const studentName = student?.name || vol.studentName || vol.user?.name || "Student";
+                                const studentRoll = student?.rollNumber || vol.studentRollNumber || vol.user?.rollNumber || "23MX101";
+                                const studentDept = student?.department || vol.studentDepartment || vol.user?.department || "Student";
 
                                 return (
                                     <div key={vol.id} className="col-md-6">
-                                        <div className="glass-panel p-3 d-flex align-items-center gap-3 border border-secondary border-opacity-30">
-                                            <div className="bg-info bg-opacity-25 text-info p-3 rounded-circle">
-                                                <FaHandsHelping size={24} />
+                                        <div className="glass-panel p-3 d-flex align-items-center justify-content-between gap-3 border border-secondary border-opacity-30">
+                                            <div className="d-flex align-items-center gap-3">
+                                                <div className="bg-info bg-opacity-25 text-info p-3 rounded-circle">
+                                                    <FaHandsHelping size={24} />
+                                                </div>
+                                                <div>
+                                                    <h6 className="text-white fw-bold mb-1">{studentName}</h6>
+                                                    <p className="text-muted fs-8 mb-1">{studentRoll} • {studentDept}</p>
+                                                    <span className="badge bg-primary bg-opacity-25 text-light fs-9 border border-primary border-opacity-50">
+                                                        Event: {event.title}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h6 className="text-white fw-bold mb-1">{studentName}</h6>
-                                                <p className="text-muted fs-8 mb-1">{studentRoll} • {studentDept}</p>
-                                                <span className="badge bg-primary bg-opacity-25 text-light fs-9 border border-primary border-opacity-50">
-                                                    Event: {event.title}
-                                                </span>
-                                            </div>
+                                            <button
+                                                type="button"
+                                                className="btn btn-outline-danger btn-sm d-flex align-items-center gap-1 py-1 px-3 fs-8 flex-shrink-0"
+                                                onClick={() => handleRemoveVolunteer(vol)}
+                                                title={`Remove ${studentName} as volunteer`}
+                                            >
+                                                <FaTrash size={12} /> Remove
+                                            </button>
                                         </div>
                                     </div>
                                 );

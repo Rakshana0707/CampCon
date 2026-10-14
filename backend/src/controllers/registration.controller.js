@@ -662,6 +662,108 @@ const getStudentsList = async (req, res, next) => {
     }
 };
 
+// 9. Remove Volunteer (Organizer or Admin)
+const removeVolunteer = async (req, res, next) => {
+    try {
+        const rawParam = req.params.id;
+        const targetId = rawParam ? parseInt(rawParam, 10) : null;
+        const eventId = parseInt(req.body?.eventId || req.query?.eventId, 10);
+        const studentId = parseInt(req.body?.studentId || req.body?.userId || req.query?.studentId, 10);
+        const registrationId = parseInt(req.body?.registrationId || (targetId && !isNaN(targetId) ? targetId : null), 10);
+
+        let registration = null;
+
+        if (registrationId && !isNaN(registrationId)) {
+            registration = await prisma.registration.findUnique({
+                where: { id: registrationId },
+                include: { event: true, user: true }
+            });
+        }
+
+        if (!registration && eventId && studentId) {
+            registration = await prisma.registration.findFirst({
+                where: {
+                    eventId: eventId,
+                    userId: studentId,
+                    role: 'VOLUNTEER'
+                },
+                include: { event: true, user: true }
+            });
+        }
+
+        if (!registration && targetId && !isNaN(targetId) && studentId) {
+            registration = await prisma.registration.findFirst({
+                where: {
+                    eventId: targetId,
+                    userId: studentId,
+                    role: 'VOLUNTEER'
+                },
+                include: { event: true, user: true }
+            });
+        }
+
+        if (!registration) {
+            return res.status(404).json({ success: false, error: 'Volunteer registration record not found.' });
+        }
+
+        // Authorization check: User must be Admin or Organizer of the event / domain
+        if (req.user.role !== 'ADMIN' && registration.event.organizerId !== req.user.id) {
+            const organizerEntityNames = [
+                req.user.department,
+                ...(req.user.organizerAssignments || []).map(a => a.organizerEntity?.name || a.name)
+            ].filter(Boolean).map(n => n.toLowerCase().trim());
+
+            const eventDept = (registration.event.department || '').toLowerCase().trim();
+            const eventOrgName = (registration.event.organizingEntityName || '').toLowerCase().trim();
+
+            const isAuthorized = organizerEntityNames.some(name => name === eventDept || name === eventOrgName);
+
+            if (!isAuthorized) {
+                return res.status(403).json({ success: false, error: 'Unauthorized to remove volunteers for this event.' });
+            }
+        }
+
+        await prisma.$transaction(async (tx) => {
+            // Delete related attendance or certificate records if present
+            await tx.attendance.deleteMany({
+                where: { registrationId: registration.id }
+            });
+            await tx.certificate.deleteMany({
+                where: { registrationId: registration.id }
+            });
+
+            // Delete registration record
+            await tx.registration.delete({
+                where: { id: registration.id }
+            });
+
+            // Refund event seat capacity if was Approved/Pending
+            if (registration.status === 'APPROVED' || registration.status === 'PENDING') {
+                await tx.event.update({
+                    where: { id: registration.eventId },
+                    data: { availableSeats: { increment: 1 } }
+                });
+            }
+
+            // Notification to the removed student
+            try {
+                await tx.notification.create({
+                    data: {
+                        userId: registration.userId,
+                        message: `You have been removed as a volunteer for "${registration.event.title}".`
+                    }
+                });
+            } catch (notifyErr) {
+                console.warn('Failed to send volunteer removal notification:', notifyErr);
+            }
+        });
+
+        res.status(200).json({ success: true, message: 'Volunteer removed successfully.' });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     registerForEvent,
     cancelRegistration,
@@ -670,6 +772,8 @@ module.exports = {
     getRegistrationById,
     updateRegistrationStatus,
     assignVolunteer,
+    removeVolunteer,
     getStudentsList
 };
+
 

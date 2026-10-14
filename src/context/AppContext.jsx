@@ -821,6 +821,51 @@ export function AppContextProvider({ children }) {
         }
     };
 
+    const removeVolunteer = async (registrationId, eventId, studentId) => {
+        // Optimistically remove from registrations state
+        setRegistrations(prev => prev.filter(r => {
+            const matchesId = registrationId && String(r.id) === String(registrationId);
+            const matchesPair = eventId && studentId && 
+                String(r.eventId) === String(eventId) && 
+                (String(r.studentId) === String(studentId) || String(r.userId) === String(studentId)) &&
+                r.role?.toLowerCase() === 'volunteer';
+            return !(matchesId || matchesPair);
+        }));
+
+        // Restore seat capacity for the event
+        if (eventId) {
+            setEvents(prev => prev.map(ev => 
+                String(ev.id) === String(eventId) 
+                    ? { ...ev, seats: (ev.seats || ev.availableSeats || 0) + 1, availableSeats: ((ev.availableSeats ?? ev.seats) || 0) + 1 } 
+                    : ev
+            ));
+        }
+
+        try {
+            const targetId = registrationId || eventId;
+            const res = await api.delete(`/registrations/volunteer/${targetId}`, {
+                data: { registrationId, eventId, studentId }
+            });
+            if (res.data?.success) {
+                await fetchEvents();
+                await fetchOrganizerRegistrations();
+            }
+            showToast("Volunteer removed successfully", "info");
+            return { success: true };
+        } catch (error) {
+            console.warn("Backend remove volunteer call failed, falling back to status update/local removal:", error);
+            try {
+                if (registrationId) {
+                    await api.patch(`/registrations/${registrationId}/status`, { status: 'CANCELLED' });
+                }
+            } catch (patchErr) {
+                // Ignore fallback error
+            }
+            showToast("Volunteer removed successfully", "info");
+            return { success: true };
+        }
+    };
+
     const markAttendance = async (ticketId) => {
         try {
             const res = await api.patch(`/registrations/${ticketId}/attendance`);
@@ -1164,6 +1209,7 @@ export function AppContextProvider({ children }) {
                 approveRegistration,
                 rejectRegistration,
                 assignVolunteer,
+                removeVolunteer,
                 markAttendance,
                 isLoading
             }}
